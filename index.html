@@ -183,26 +183,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- 2. OrbitControls -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <!-- 3. MediaPipe Pose (Loaded Locally to avoid VM Network issues) -->
-    <script src="mediapipe/pose.js"></script>
+    <!-- 3. MediaPipe Pose (Using CDN because local might fail worker/wasm load) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <!-- 4. MediaPipe Camera Utils -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 </head>
-<body class="gradient-bg min-h-screen font-sans flex items-center justify-center p-4 md:p-6 overflow-x-hidden select-none text-amber-100/90">
+<body class="gradient-bg w-screen h-screen m-0 p-0 font-sans flex items-center justify-center overflow-hidden select-none text-amber-100/90">
 
     <!-- Grand Centered Kiosk Container (Centered, max-width 480px for a vertical kiosk aspect ratio) -->
-    <div class="w-full max-w-[480px] flex flex-col gap-6 mx-auto">
+    <div class="w-full h-full flex flex-col mx-auto">
         
         <!-- Museum Title Header (Moved to top of the single centered column) -->
-        <div class="text-center py-2 pb-3 border-b border-amber-500/10">
+        <div class="hidden text-center py-2 pb-3 border-b border-amber-500/10">
             <h1 class="text-2xl font-black text-amber-500 tracking-[0.2em] uppercase flex items-center justify-center gap-2 font-classical">
                 <i class="fa-solid fa-mirror-half animate-pulse text-amber-600/80"></i> 大唐·时空幻影镜
             </h1>
             <p class="text-[8px] text-amber-500/60 font-bold tracking-[0.25em] mt-1 font-roman">THE SANCAI HOLOGRAPHIC TIME MIRROR</p>
         </div>
 
+        <!-- 1. The True Background Image -->
+        <div class="absolute inset-0 z-0 flex items-center justify-center">
+            <img src="video/真真正正的背景.png" class="w-full h-full object-contain" alt="Real Background" />
+        </div>
+
         <!-- 2. The Vertical Holographic Mirror (Height: 680px, Width: 100%) -->
-        <div id="unifiedStage" class="relative w-full rounded-[2rem] overflow-hidden bg-[#060605] border-4 border-amber-500/20 shadow-[0_0_50px_rgba(0,0,0,0.8)] transition-all duration-700 hover:border-amber-500/40" style="height: 680px;">
+        <div id="unifiedStage" class="relative w-full h-full overflow-hidden" style="height: 100vh;">
                 
                 <!-- 1. Picture-in-Picture Webcam Feed (Top-Right PIP) -->
                 <div id="webcamPIP" class="absolute top-4 right-4 z-30 w-32 h-40 rounded-2xl overflow-hidden border border-amber-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.5)] bg-neutral-950 flex items-center justify-center">
@@ -213,15 +218,22 @@
                     </div>
                 </div>
                 <!-- 2. The 3D WebGL Canvas (Figurine) -->
-                <canvas id="threejs-canvas" class="absolute inset-0 w-full h-full z-10 opacity-0 transition-opacity duration-1000"></canvas>
+                <canvas id="threejs-canvas" class="hidden absolute inset-0 w-full h-full z-10 transition-opacity duration-1000 opacity-100"></canvas>
                 
                 <!-- 2b. Pre-rendered Video Player Overlay (for awakening dance) -->
                 <!-- 2b. Pre-rendered Video Player Overlays (Double Buffer for Seamless Crossfading) -->
-                <video id="videoPlayerA" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" playsinline></video>
-                <video id="videoPlayerB" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" playsinline></video>
+                <video id="videoPlayerA" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" src="video/开头.mp4" muted autoplay loop playsinline></video>
+                <video id="videoPlayerB" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" muted autoplay loop playsinline></video>
+                
+                <!-- OVERLAY player for the Opening Curtain (mix-blend-mode: screen makes black transparent) -->
+                <video id="curtainOverlayPlayer" class="absolute inset-0 w-full h-full object-contain z-30 hidden pointer-events-none" style="mix-blend-mode: screen;" playsinline preload="auto"></video>
+                
+                <!-- NEW: Prompt Overlays (Dance and Material) -->
+                <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/提示跳舞.png" alt="提示跳舞" />
+                <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/提示换材质.png" alt="提示换材质" />
                 
                 <!-- 2c. Standby Silhouette Image Overlay (State: STANDBY_LOOP) -->
-                <img id="standbySilhouetteOverlay" class="absolute inset-0 w-full h-full object-contain z-20 transition-opacity duration-500 opacity-100" src="assets/videos/silhouette.png" alt="Silhouette Attract Loop" />
+                <img id="standbySilhouetteOverlay" class="hidden absolute inset-0 w-full h-full object-contain z-20 transition-opacity duration-500 opacity-100" src="assets/videos/silhouette.png" alt="Silhouette Attract Loop" />
                 
                 <!-- Camera Error / Warning HUD -->
                 <div id="cameraWarningHUD" class="hidden absolute inset-0 bg-neutral-950/98 p-8 flex flex-col items-center justify-center text-center z-30 space-y-4 border border-amber-500/20">
@@ -247,45 +259,19 @@
                 </svg>
                 
                 <!-- 5. Floating Status Badge (Top-Left) -->
-                <div class="absolute top-4 left-4 z-30 flex flex-col gap-1.5 items-start">
+                <div class="hidden absolute top-4 left-4 z-30 flex flex-col gap-1.5 items-start">
                     <span id="trackingStatus" class="bg-neutral-950/85 backdrop-blur-md border border-white/5 text-[9px] text-amber-100/80 px-2.5 py-1.5 rounded-md shadow-2xl tracking-wider flex items-center select-none font-classical">
                         <span class="w-1.5 h-1.5 rounded-full bg-error animate-ping mr-1.5" id="statusDot"></span>
                         摄像头关闭
                     </span>
                     <div class="bg-neutral-950/85 backdrop-blur-md border border-amber-500/20 text-[9px] font-bold text-amber-500 px-2.5 py-1.5 rounded-md shadow-2xl tracking-widest font-classical uppercase hidden" id="activeChallengeBadge">正在挑战：伞裙乐人 · 反弹琵琶</div>
                 </div>
- 
-                <!-- 6. Floating Kiosk Instruction Card (Bottom Center) -->
-                <div id="kioskInstruction" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 bg-neutral-950/90 backdrop-blur-md border border-amber-500/30 px-6 py-3 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-center max-w-[85%] transition-all duration-500 opacity-0 transform translate-y-4 pointer-events-auto cursor-pointer" onclick="skipPoseChallenge()" title="点击直接唤醒">
-                    <span id="kioskInstructionText" class="text-xs font-classical font-bold text-amber-500 tracking-[0.15em] leading-relaxed">
-                        正在读取您的身影...
-                    </span>
-                </div>
-                
-                <!-- Big Flashing Prompt for Interaction Guidance -->
-                <div id="guidancePromptBanner" class="hidden absolute top-1/3 left-0 right-0 text-center z-30 pointer-events-none animate-bounce">
-                    <span id="guidancePromptText" class="px-6 py-3 bg-amber-500/20 backdrop-blur-md border-2 border-amber-500 text-amber-500 rounded-full font-classical text-xs font-bold tracking-[0.2em] shadow-[0_0_30px_rgba(212,175,55,0.4)]">
-                        🙌 请抬起双手，与唐三彩开启时空共鸣！ 🙌
-                    </span>
-                </div>
-                
-                <!-- 9. Manual Awaken Button (Revealed after curtain opens) -->
-                <div id="awakenButtonContainer" class="absolute inset-0 flex items-center justify-center z-30 opacity-0 pointer-events-none transition-all duration-500">
-                    <button id="awakenButton" disabled class="px-8 py-4 bg-[#1a1105]/95 text-amber-500/50 border-2 border-amber-500/20 rounded-full font-classical text-lg font-bold tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.05)] transition-all duration-300 cursor-not-allowed" onclick="manuallyAwaken()">
-                        <span class="flex items-center gap-3" id="awakenButtonText">
-                            <svg class="animate-spin h-5 w-5 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            正在感应穿搭...
-                        </span>
-                    </button>
-                </div>
+
  
                 <!-- 7. Kiosk Start Overlay (Standby / Attract Loop state) -->
-                <div id="startOverlay" class="absolute inset-0 z-40 flex items-center justify-center bg-black/10 transition-opacity duration-500">
+                <div id="startOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-black/10 transition-opacity duration-500">
                     <!-- Center Gold Button -->
-                    <button id="curtainBtn" class="w-36 h-36 rounded-full bg-[#d4af37]/5 border-2 border-[#d4af37]/50 flex flex-col items-center justify-center text-[#d4af37] shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:scale-105 hover:bg-[#d4af37]/15 transition-all duration-300 z-50 group" onclick="startCinematicFlow()">
+                    <button id="curtainBtn" class="hidden w-36 h-36 rounded-full bg-[#d4af37]/5 border-2 border-[#d4af37]/50 flex flex-col items-center justify-center text-[#d4af37] shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:scale-105 hover:bg-[#d4af37]/15 transition-all duration-300 z-50 group" onclick="startCinematicFlow()">
                         <i class="fa-solid fa-play text-2xl mb-2 group-hover:scale-110 transition-transform duration-300"></i>
                         <span class="text-xs font-classical font-bold tracking-[0.2em]">开启共舞</span>
                         <span class="text-[8px] font-roman opacity-60 mt-1">START DANCE</span>
@@ -334,7 +320,7 @@
                 </div>
 
                 <!-- Floating On-Screen Debug Logger (Inside Stage Overlay) -->
-                <div id="onScreenLogger" class="hidden absolute bottom-20 left-4 z-50 w-80 h-36 bg-black bg-opacity-95 border border-white/20 rounded-lg p-2.5 text-[9px] font-mono text-green-400 overflow-hidden shadow-2xl flex flex-col">
+                <div id="onScreenLogger" class="absolute bottom-20 left-4 z-50 w-96 h-48 bg-black bg-opacity-95 border border-green-500/50 rounded-lg p-2.5 text-[9px] font-mono text-green-400 overflow-y-auto shadow-2xl flex flex-col">
                     <div class="flex justify-between border-b border-white/10 pb-1.5 mb-1.5 shrink-0">
                         <span class="text-white font-semibold flex items-center gap-1">🔍 调试日志 (Debug Logs)</span>
                         <div class="flex gap-2">
@@ -369,6 +355,7 @@
     <!-- --- FIGURINES DATABASE (Carousel Exhibit Database) --- -->
     <script>
         // 🏺 大唐时空幻影镜——展项资产数据库 (Single Figurine Database)
+        const SPIN_LOOP_VIDEOS = ['video/大花到圆头.mp4', 'video/圆头到蓝花.mp4', 'video/蓝花到条纹.mp4'];
         const FIGURINES_DB = {
             red: {
                 id: "red",
@@ -379,9 +366,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_red.mp4",
-                tags: {
-                    color: "红"
-                }
+                danceVideo: "video/红胡旋.mp4",
+                firstSpinVideo: "video/红到大花.mp4",
+                outroVideo: "final_vid/红1.mp4",
+                tags: { color: "红" }
             },
             blue: {
                 id: "blue",
@@ -392,9 +380,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_blue.mp4",
-                tags: {
-                    color: "蓝"
-                }
+                danceVideo: "video/蓝胡旋.mp4",
+                firstSpinVideo: "video/蓝到大花.mp4",
+                outroVideo: "final_vid/蓝1.mp4",
+                tags: { color: "蓝" }
             },
             black: {
                 id: "black",
@@ -405,9 +394,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_black.mp4",
-                tags: {
-                    color: "黑"
-                }
+                danceVideo: "video/黑胡旋.mp4",
+                firstSpinVideo: "video/黑到大花.mp4",
+                outroVideo: "final_vid/黑1.mp4",
+                tags: { color: "黑" }
             },
             white: {
                 id: "white",
@@ -418,9 +408,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_white.mp4",
-                tags: {
-                    color: "白"
-                }
+                danceVideo: "video/白胡旋.mp4",
+                firstSpinVideo: "video/白到大花.mp4",
+                outroVideo: "final_vid/白1.mp4",
+                tags: { color: "白" }
             },
             gray: {
                 id: "gray",
@@ -431,9 +422,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_gray.mp4",
-                tags: {
-                    color: "灰"
-                }
+                danceVideo: "video/灰胡旋.mp4",
+                firstSpinVideo: "video/灰到大花.mp4",
+                outroVideo: "final_vid/灰1.mp4",
+                tags: { color: "灰" }
             }
         };
 
@@ -463,6 +455,15 @@
                         consoleDiv.scrollTop = consoleDiv.scrollHeight;
                     }
                 }
+                
+                window.onerror = function(msg, url, line, col, error) {
+                    addLogLine(`[🚨 Global Error] ${msg} (${url}:${line})`, 'text-red-500');
+                    return false;
+                };
+                
+                window.addEventListener('unhandledrejection', function(event) {
+                    addLogLine(`[🚨 Unhandled Promise] ${event.reason}`, 'text-red-500');
+                });
                 
                 const originalLog = console.log;
                 console.log = function(...args) {
@@ -582,7 +583,10 @@
             INTRO_REVEAL: 'INTRO_REVEAL',           // OOTD Match -> playing matched color reveal video
             STANDBY_WAIT: 'STANDBY_WAIT',           // Reveal ended, paused on color figurine, waiting for pose challenge
             DANCE_LOOP: 'DANCE_LOOP',               // Main looping Hu Xuan Dance (dance_loop.mp4) playing
+            WAITING_FOR_SPIN: 'WAITING_FOR_SPIN',
             SPIN_TRANSITION: 'SPIN_TRANSITION',     // Sequential spin transition video (spin_X.mp4) playing
+            SPIN_LOOPING: 'SPIN_LOOPING',           // Holding spread arms, looping spin videos
+            WAITING_FOR_SPIN_RESUME: 'WAITING_FOR_SPIN_RESUME', // Hands dropped, 5s grace period
             OUTRO_VIDEO: 'OUTRO_VIDEO',             // Video 5 (Outro & Curtain Close) playing
             STICKER_GIFT: 'STICKER_GIFT'            // Video 5 ended, showing sticker card
         };
@@ -603,11 +607,16 @@
                 avatar = new AvatarEngine("threejs-canvas");
             } catch (e) { console.error("Avatar Engine init failed:", e); }
             
-            recorder = new AudioVideoRecorder(document.getElementById("threejs-canvas"), bgMusicElement);
+            try {
+                recorder = new AudioVideoRecorder(document.getElementById("threejs-canvas"), bgMusicElement);
+            } catch (e) {
+                console.error("AudioVideoRecorder init failed:", e);
+            }
             
             try {
                 webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
                 webcamElement.srcObject = webcamStream;
+                try { await webcamElement.play(); } catch(e) { console.warn("play() failed", e); }
                 createMocapEngine();
                 updateTrackingBadge("success", "已连接");
             } catch (e) {
@@ -618,7 +627,7 @@
             resetKiosk();
             
             // Initialize description label with default figurine
-            updateMuseumInfoCard(FIGURINES_DB['optimal_1']);
+            updateMuseumInfoCard(FIGURINES_DB['white']);
         });
 
         async function retryWebcamAccess() {
@@ -639,55 +648,76 @@
         /**
          * Seamless Double-Buffered Video Player Helper
          */
-        function playSeamlessVideo(src, loop = false, onendedCallback = null) {
-            const playerA = document.getElementById('videoPlayerA');
-            const playerB = document.getElementById('videoPlayerB');
-            if (!playerA || !playerB) return;
-            
-            const nextPlayer = (activePlayer === playerA) ? playerB : playerA;
-            const prevPlayer = activePlayer;
-            
-            console.log(`[Video System] Switching source to: ${src}`);
-            
-            nextPlayer.src = src;
-            nextPlayer.loop = loop;
-            nextPlayer.ontimeupdate = null; // Clear old listeners
-            
-            // Mute status - standby loop must be muted for Chrome autoplay
-            if (src.includes("0_standby.mp4")) {
-                nextPlayer.muted = true;
-            } else {
-                nextPlayer.muted = false;
-            }
-            
-            nextPlayer.onplaying = function() {
-                console.log(`[Video System] Next player playing -> fading in`);
-                nextPlayer.classList.remove('opacity-0');
-                nextPlayer.classList.add('opacity-100');
+        function playSeamlessVideo(src, loop = false, blendMode = 'screen', onendedCallback = null) {
+            return new Promise((resolve, reject) => {
+                const playerA = document.getElementById('videoPlayerA');
+                const playerB = document.getElementById('videoPlayerB');
+                if (!playerA || !playerB) { resolve(); return; }
                 
-                if (prevPlayer) {
-                    prevPlayer.classList.remove('opacity-100');
-                    prevPlayer.classList.add('opacity-0');
-                    setTimeout(() => {
-                        if (currentState !== AppState.STANDBY_LOOP) {
-                            prevPlayer.pause();
-                        }
-                    }, 300);
+                const nextPlayer = (activePlayer === playerA) ? playerB : playerA;
+                const prevPlayer = activePlayer;
+                
+                console.log(`[Video System] Switching source to: ${src}`);
+                
+                nextPlayer.src = src;
+                nextPlayer.loop = loop;
+                nextPlayer.style.mixBlendMode = blendMode;
+                nextPlayer.currentTime = 0;
+                nextPlayer.ontimeupdate = null; // Clear old listeners
+                
+                // Mute status - standby loop must be muted for Chrome autoplay
+                if (src.includes("开头.mp4") || src.includes("0_standby.mp4")) {
+                    nextPlayer.muted = true;
+                } else {
+                    nextPlayer.muted = false;
                 }
-                nextPlayer.onplaying = null;
-            };
-            
-            if (onendedCallback) {
-                nextPlayer.ontimeupdate = function() {
-                    if (nextPlayer.duration > 1.0 && nextPlayer.currentTime > 1.0 && (nextPlayer.ended || nextPlayer.currentTime >= nextPlayer.duration - 0.08)) {
-                        nextPlayer.ontimeupdate = null; // One-shot
-                        onendedCallback();
+                
+                nextPlayer.onplaying = function() {
+                    console.log(`[Video System] Next player playing -> fading in`);
+                    nextPlayer.classList.remove('opacity-0');
+                    nextPlayer.classList.add('opacity-100');
+                    
+                    if (prevPlayer && prevPlayer !== nextPlayer) {
+                        prevPlayer.classList.remove('opacity-100');
+                        prevPlayer.classList.add('opacity-0');
+                        setTimeout(() => {
+                            if (currentState !== AppState.STANDBY_LOOP) {
+                                prevPlayer.pause();
+                            }
+                        }, 300);
                     }
+                    nextPlayer.onplaying = null;
                 };
-            }
-            
-            activePlayer = nextPlayer;
-            nextPlayer.play().catch(e => console.warn(`[Video System] Play failed for ${src}:`, e));
+                
+                // Fallback: If onplaying doesn't fire (e.g. cached/autoplay), force visibility
+                setTimeout(() => {
+                    nextPlayer.classList.remove('opacity-0');
+                    nextPlayer.classList.add('opacity-100');
+                    if (prevPlayer && prevPlayer !== nextPlayer) {
+                        prevPlayer.classList.remove('opacity-100');
+                        prevPlayer.classList.add('opacity-0');
+                    }
+                }, 500);
+                
+                if (!loop) {
+                    nextPlayer.ontimeupdate = function() {
+                        if (nextPlayer.duration > 1.0 && nextPlayer.currentTime > 1.0 && (nextPlayer.ended || nextPlayer.currentTime >= nextPlayer.duration - 0.08)) {
+                            nextPlayer.ontimeupdate = null; // One-shot
+                            if (onendedCallback) onendedCallback();
+                            resolve();
+                        }
+                    };
+                }
+                
+                activePlayer = nextPlayer;
+                nextPlayer.play().then(() => {
+                    if (loop) resolve(); // For looping videos, resolve immediately after play starts
+                }).catch(e => {
+                    console.warn(`[Video System] Play failed for ${src}:`, e);
+                    // If play fails (e.g. autoplay blocked), resolve anyway to avoid hanging the flow
+                    resolve();
+                });
+            });
         }
 
         /**
@@ -705,24 +735,25 @@
             document.getElementById('stickerGiftOverlay').classList.remove('show-sticker');
             hideGuidancePrompt(); // Reset banner
             
-            updateInstruction("🙌 双手合十，唤醒大唐唐俑 🙌");
+            // Hide custom PNG prompts
+            const promptDance = document.getElementById('promptDanceImg');
+            if (promptDance) { promptDance.classList.add('hidden'); promptDance.classList.remove('opacity-100'); }
+            const promptMat = document.getElementById('promptMaterialImg');
+            if (promptMat) { promptMat.classList.add('hidden'); promptMat.classList.remove('opacity-100'); }
             
-            // 2. Hide 3D Canvas and Silhouette
-            document.getElementById('threejs-canvas').classList.add('opacity-0');
+            // 1. Text instruction update
+            updateInstruction("请站在屏幕前唤醒大唐唐俑");
+            
+            // 2. Hide Silhouette (but keep Canvas and Background visible)
             const stageImg = document.getElementById('stageFigurineImg');
             if (stageImg) stageImg.style.opacity = "0";
             
-            // 3. Show standby silhouette image overlay
+            // 3. Play Standby video loop (Fully Opaque)
             const standbyOverlay = document.getElementById('standbySilhouetteOverlay');
             if (standbyOverlay) {
-                standbyOverlay.classList.remove('opacity-0');
-                standbyOverlay.classList.add('opacity-100');
+                standbyOverlay.classList.add('hidden'); // Hide the static image
             }
-            if (activePlayer) {
-                activePlayer.pause();
-                activePlayer.classList.remove('opacity-100');
-                activePlayer.classList.add('opacity-0');
-            }
+            playSeamlessVideo("video/开头.mp4", true, 'normal');
             
             // 4. Reset Awaken Button
             const awakenContainer = document.getElementById('awakenButtonContainer');
@@ -758,98 +789,98 @@
             console.log("[State Machine] Starting cinematic flow -> INTRO_REVEAL");
             currentState = AppState.INTRO_REVEAL;
             
-            playChimeEffect();
+            // Keep muted for autoplay reliability in Chrome
+            const playerA = document.getElementById('videoPlayerA');
+            const playerB = document.getElementById('videoPlayerB');
+            if (playerA) playerA.muted = true;
+            if (playerB) playerB.muted = true;
             
-            // Hide the start overlay
+            // Trigger VLM match without blocking
+            triggerSilentBackgroundMatch().catch(e => console.error("[State Machine] Match failed:", e));
+            
+            console.log(`[State Machine] Playing intro video: video/开幕_终.mp4`);
+            
+            // Hide start overlay so it's not clickable anymore
             const startOverlay = document.getElementById('startOverlay');
             if (startOverlay) {
                 startOverlay.classList.add('opacity-0', 'pointer-events-none');
             }
             
-            // Show canvas loader overlay while VLM is performing the match
-            const loader = document.getElementById('canvasLoader');
-            const loaderTitle = document.getElementById('loaderTitle');
-            if (loader) {
-                if (loaderTitle) loaderTitle.innerText = "正在感应穿搭，重塑时空...";
-                loader.classList.remove('hidden');
-            }
-            
-            updateInstruction("正在感应穿搭，重塑时空...");
-            
-            // Trigger VLM match and wait for the result
-            try {
-                await triggerSilentBackgroundMatch();
-            } catch (e) {
-                console.error("[State Machine] OOTD Match failed during start flow, falling back:", e);
-            }
-            
-            // Now we have the matched figurine ID
             const matchedId = window.matchedFigurineId || 'white';
             const figurine = FIGURINES_DB[matchedId];
             const revealVid = figurine ? figurine.revealVideo : "assets/videos/1_reveal_white.mp4";
             
-            // Hide loader and standby silhouette overlay
-            if (loader) loader.classList.add('hidden');
-            const standbyOverlay = document.getElementById('standbySilhouetteOverlay');
-            if (standbyOverlay) {
-                standbyOverlay.classList.remove('opacity-100');
-                standbyOverlay.classList.add('opacity-0');
-            }
+            // We want the curtain video to play OVER the reveal video.
+            // 1. Play the reveal video on the MAIN background player
+            console.log(`[State Machine] Playing color-matched reveal video (underneath): ${revealVid}`);
             
-            // Unmute players for interactive audio
-            const playerA = document.getElementById('videoPlayerA');
-            const playerB = document.getElementById('videoPlayerB');
-            if (playerA) playerA.muted = false;
-            if (playerB) playerB.muted = false;
-            
-            console.log(`[State Machine] Playing color-matched reveal video: ${revealVid}`);
-            playSeamlessVideo(revealVid, false, () => {
-                console.log("[State Machine] Reveal video ended (timeupdate) -> STANDBY_WAIT");
+            const showPromptCallback = () => {
+                console.log("[State Machine] Reveal video ended -> STANDBY_WAIT");
                 currentState = AppState.STANDBY_WAIT;
+                
+                // Show "Prompt Dance" PNG at the very end
+                const promptDance = document.getElementById('promptDanceImg');
+                if (promptDance) { 
+                    promptDance.classList.remove('hidden'); 
+                    void promptDance.offsetWidth; // Force reflow
+                    promptDance.classList.add('opacity-100'); 
+                }
                 
                 if (mocap) {
                     mocap.isPoseTriggerMode = true; // Enable pose match challenge!
-                    mocap.activePoseKey = figurine ? figurine.poseKey : 'optimal_1'; // Require matched pose!
-                    mocap.matchStartTime = null; // Reset hold timer
-                    
-                    const label = figurine ? figurine.poseLabel.replace("正在挑战：", "") : "双手抬至水平";
-                    updateInstruction(`🙌 请做出 [${label}] 的姿势来唤醒它 🙌`);
+                    mocap.activePoseKey = figurine ? figurine.poseKey : 'optimal_1';
+                    mocap.matchStartTime = null;
                 }
+            };
+            
+            const playRevealPromise = playSeamlessVideo(revealVid, false, 'screen', showPromptCallback);
+            
+            // 2. Play the curtain video on the OVERLAY player (with screen blend mode to make black transparent)
+            const curtainPlayer = document.getElementById('curtainOverlayPlayer');
+            if (curtainPlayer) {
+                console.log(`[State Machine] Playing intro curtain video (overlay): video/开幕_终.mp4`);
+                curtainPlayer.src = "video/开幕_终.mp4";
+                curtainPlayer.style.opacity = '1';
+                curtainPlayer.style.transition = '';
+                curtainPlayer.classList.remove('hidden');
                 
-                updateTrackingBadge("success", "已就绪，请摆出相同姿势");
-            });
+                curtainPlayer.play().catch(e => console.error("Curtain play failed:", e));
+                
+                curtainPlayer.onended = () => {
+                    curtainPlayer.classList.add('hidden');
+                };
+            }
+            
+            try {
+                // Wait for the background reveal video to finish
+                await playRevealPromise;
+            } catch (e) {
+                console.error("[State Machine] Play failed:", e);
+            }
         }
 
-        /**
-         * Plays Video 5 (Outro & Curtain Close)
-         */
-        function playOutroVideo() {
+        async function playOutroVideo() {
             currentState = AppState.OUTRO_VIDEO;
-            hideGuidancePrompt();
-            updateInstruction("大唐华舞，谢幕呈祥...");
             
-            playSeamlessVideo("assets/videos/5_outro_close.mp4", false, () => {
-                console.log("[State Machine] Outro video ended (timeupdate) -> STICKER_GIFT");
-                currentState = AppState.STICKER_GIFT;
-                
-                // Hide active player
-                if (activePlayer) {
-                    activePlayer.classList.remove('opacity-100');
-                    activePlayer.classList.add('opacity-0');
-                }
-                
-                // Show Polaroid sticker card
-                const matchedId = window.matchedFigurineId || 'white';
-                const figurine = FIGURINES_DB[matchedId];
-                if (figurine) {
-                    document.getElementById('stickerImg').src = figurine.image;
-                }
-                document.getElementById('stickerBlessing').innerText = window.aiBlessing || "岁岁平安，万事大吉";
-                
-                setTimeout(() => {
-                    showStickerGift();
-                }, 1200);
-            });
+            // Clean up any lingering prompts
+            const promptDance = document.getElementById('promptDanceImg');
+            if (promptDance) promptDance.classList.add('hidden');
+            const promptMat = document.getElementById('promptMaterialImg');
+            if (promptMat) promptMat.classList.add('hidden');
+            
+            const matchedId = window.matchedFigurineId || 'white';
+            const figurine = FIGURINES_DB[matchedId];
+            const outroVid = figurine ? figurine.outroVideo : "final_vid/白1.mp4";
+            
+            console.log(`[State Machine] Playing outro video: ${outroVid}`);
+            try {
+                await playSeamlessVideo(outroVid, false, 'normal');
+            } catch (e) {
+                console.error("[State Machine] Play failed:", e);
+            }
+            
+            console.log("[State Machine] Outro video ended -> returning to STANDBY_LOOP");
+            resetKiosk();
         }
 
         /**
@@ -873,10 +904,40 @@
                     startCinematicFlow();
                 }
             };
+            // --- MANUAL BYPASS FOR TESTING ---
+            document.addEventListener('click', (e) => {
+                // Ignore clicks on buttons/controls
+                if (e.target.tagName.toLowerCase() === 'button' || e.target.closest('button')) return;
+                
+                if (currentState === AppState.STANDBY_LOOP) {
+                    console.log("[State Machine] 🖱️ MANUAL CLICK BYPASS: Start Cinematic Flow!");
+                    if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("success", "手动触发开幕");
+                    startCinematicFlow();
+                } 
+                else if (currentState === AppState.STANDBY_WAIT) {
+                    console.log("[State Machine] 🖱️ MANUAL CLICK BYPASS: Pose Matched!");
+                    if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("success", "手动触发跳舞");
+                    triggerMainDance();
+                }
+                else if (currentState === AppState.DANCE_LOOP) {
+                    console.log("[State Machine] 🖱️ MANUAL CLICK BYPASS: Trigger Spin!");
+                    if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("success", "手动触发舞蹈");
+                    window.onUserSpin();
+                }
+                else if (currentState === AppState.SPIN_VIDEO) {
+                    console.log("[State Machine] 🖱️ MANUAL CLICK BYPASS: Trigger Stillness (End)!");
+                    if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("success", "手动触发结束");
+                    if (typeof window.onUserStill === 'function') window.onUserStill(true);
+                }
+            });
 
             window.onUserSpin = function() {
                 console.log(`[State Machine] onUserSpin triggered! currentState = "${currentState}"`);
-                if (currentState === AppState.DANCE_LOOP) {
+                if (currentState === AppState.DANCE_LOOP || currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.WAITING_FOR_SPIN_RESUME) {
+                    if (window.spinResumeTimer) {
+                        clearTimeout(window.spinResumeTimer);
+                        window.spinResumeTimer = null;
+                    }
                     console.log(`[State Machine] User spin detected -> SPIN_TRANSITION (Index: ${spinVideoIndex + 1})`);
                     triggerSpinTransition();
                 } else {
@@ -885,85 +946,135 @@
             };
 
             window.onUserStill = function(isAbsent) {
-                if (!isAbsent) return; // Only trigger outro when user physically leaves (absent)
-                
-                if (currentState === AppState.DANCE_LOOP || currentState === AppState.SPIN_TRANSITION) {
-                    console.log("[State Machine] User left the scene -> OUTRO_VIDEO");
+                // If user leaves frame, or is still (hands down) for 15 seconds
+                if (currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.STANDBY_WAIT) {
+                    console.log(`[State Machine] User ${isAbsent ? 'left the scene' : 'is still for 15s'} -> OUTRO_VIDEO`);
                     playOutroVideo();
                 }
             };
 
-            window.onUserActive = function() {}; // Disarmed general movement triggers
+            window.onUserDetected = function() {
+                if (currentState === AppState.STANDBY_LOOP) {
+                    console.log("[State Machine] User presence detected! Auto-starting cinematic flow.");
+                    startCinematicFlow();
+                }
+            };
+            
+            window.onUserActive = function() {};
 
-        function triggerMainDance() {
+        async function triggerMainDance() {
             if (currentState !== AppState.STANDBY_WAIT) return;
             
             console.log("[State Machine] Pose matched -> DANCE_LOOP");
             currentState = AppState.DANCE_LOOP;
             
-            hideGuidancePrompt(); // Hide "raise hands" prompt!
+            const matchedId = window.matchedFigurineId || 'white';
+            const figurine = FIGURINES_DB[matchedId];
+            const danceVid = figurine ? figurine.danceVideo : "video/白胡旋.mp4";
             
-            // Clear any pre-existing spin state triggers
             if (mocap) {
                 mocap.spinState = 0;
                 mocap.spinTimer = 0;
             }
             
-            // Play dance_loop.mp4 once (non-looping)
-            playSeamlessVideo("assets/videos/dance_loop.mp4", false);
+            // Hide "Prompt Dance" PNG
+            const promptDance = document.getElementById('promptDanceImg');
+            if (promptDance) { 
+                promptDance.classList.remove('opacity-100'); 
+                setTimeout(() => promptDance.classList.add('hidden'), 500); 
+            }
             
-            updateInstruction("✨ 已与大唐舞伴开启时空共鸣，同频共舞中...");
-            updateTrackingBadge("success", "与大唐舞伴同频共舞中");
-            
-            // Show a floating prompt instructing the user to spin to change outfits!
-            setTimeout(() => {
-                if (currentState === AppState.DANCE_LOOP) {
-                    showGuidancePrompt("🌀 转个圈，解锁全新幻影霓裳！ 🌀");
+            const showMatPromptCallback = () => {
+                const promptMat = document.getElementById('promptMaterialImg');
+                if (promptMat) {
+                    promptMat.classList.remove('hidden');
+                    void promptMat.offsetWidth;
+                    promptMat.classList.add('opacity-100');
                 }
-            }, 3000);
+                console.log(`[State Machine] Dance video ended. Transitioning to WAITING_FOR_SPIN.`);
+                currentState = AppState.WAITING_FOR_SPIN;
+                
+                // Switch pose detection to "spread_arms" to trigger material change
+                if (mocap) {
+                    mocap.activePoseKey = 'spread_arms';
+                    mocap.matchStartTime = null;
+                    mocap.isPoseTriggerMode = true; // Re-enable detection!
+                }
+            };
+            
+            try {
+                await playSeamlessVideo(danceVid, false, 'screen', showMatPromptCallback);
+            } catch (e) {
+                console.error("[State Machine] Play failed:", e);
+            }
+            // Video finished, wait for spread arms
+            console.log(`[State Machine] Dance video ended. Paused at end frame.`);
         }
 
-        function triggerSpinTransition() {
-            currentState = AppState.SPIN_TRANSITION;
-            hideGuidancePrompt(); // Hide previous prompt
+        async function triggerSpinTransition() {
+            currentState = AppState.SPIN_LOOPING;
             
-            const spinVideoNum = (spinVideoIndex % 6) + 1;
-            const spinVideoSrc = `assets/videos/spin_${spinVideoNum}.mp4`;
+            const matchedId = window.matchedFigurineId || 'white';
+            const figurine = FIGURINES_DB[matchedId];
             
-            console.log(`[State Machine] Playing spin video: ${spinVideoSrc}`);
-            updateInstruction("🌀 曼舞旋风，幻影随形... 🌀");
+            let spinVideoSrc = "";
+            if (spinVideoIndex === 0) {
+                spinVideoSrc = figurine ? figurine.firstSpinVideo : "video/白到大花.mp4";
+            } else {
+                spinVideoSrc = SPIN_LOOP_VIDEOS[(spinVideoIndex - 1) % SPIN_LOOP_VIDEOS.length];
+            }
             
-            playSeamlessVideo(spinVideoSrc, false, () => {
-                console.log(`[State Machine] Spin video ${spinVideoNum} ended.`);
+            console.log(`[State Machine] Playing spin transition video: ${spinVideoSrc}`);
+            
+            // Fade out the prompt temporarily while the video plays
+            const promptMat = document.getElementById('promptMaterialImg');
+            if (promptMat) { 
+                promptMat.classList.remove('opacity-100'); 
+                setTimeout(() => promptMat.classList.add('hidden'), 500);
+            }
+            
+            const showMatPromptCallback = () => {
+                if (promptMat) {
+                    promptMat.classList.remove('hidden');
+                    void promptMat.offsetWidth;
+                    promptMat.classList.add('opacity-100');
+                }
                 
-                // Increment sequential index
                 spinVideoIndex++;
                 
-                currentState = AppState.DANCE_LOOP;
+                // Continuous Spin Logic: 
+                // As long as hands are not put down (isCurrentlySpreadingArms is true)
+                const isHolding = mocap && mocap.isCurrentlySpreadingArms;
                 
-                if (spinVideoIndex === 6) {
-                    // After spin_6, play dance_loop.mp4 once, then proceed to outro
-                    console.log("[State Machine] Spin 6 ended. Playing final dance_loop...");
-                    playSeamlessVideo("assets/videos/dance_loop.mp4", false, () => {
-                        if (currentState === AppState.DANCE_LOOP) {
-                            console.log("[State Machine] Final dance finished. Proceeding to outro.");
+                if (isHolding) {
+                    console.log(`[State Machine] Spin loop continues (Holding arms). Playing next.`);
+                    triggerSpinTransition(); // Play next
+                } else {
+                    console.log(`[State Machine] Hands down. Waiting 5s for resume.`);
+                    currentState = AppState.WAITING_FOR_SPIN_RESUME;
+                    
+                    if (mocap) {
+                        mocap.activePoseKey = 'spread_arms';
+                        mocap.matchStartTime = null;
+                        mocap.isPoseTriggerMode = true;
+                    }
+                    
+                    window.spinResumeTimer = setTimeout(() => {
+                        if (currentState === AppState.WAITING_FOR_SPIN_RESUME) {
+                            console.log(`[State Machine] 5s elapsed without raising hands. Triggering outro.`);
                             playOutroVideo();
                         }
-                    });
-                } else {
-                    // For spin 1-5, do NOT play dance_loop.mp4, stay paused on the spin end frame
-                    console.log(`[State Machine] Spin ${spinVideoIndex} complete. Paused. Waiting for spin ${spinVideoIndex + 1}.`);
-                    
-                    updateInstruction("✨ 大唐仕女华丽转圈，解锁了全新姿态！");
-                    
-                    // Reset guide prompt after a short delay
-                    setTimeout(() => {
-                        if (currentState === AppState.DANCE_LOOP) {
-                            showGuidancePrompt("🌀 再转个圈，解锁下一个形象！ 🌀");
-                        }
-                    }, 2000);
+                    }, 5000);
                 }
-            });
+            };
+            
+            try {
+                // Ensure spin videos use screen blending for transparent black background
+                await playSeamlessVideo(spinVideoSrc, false, 'screen', showMatPromptCallback);
+            } catch (e) {
+                console.error("[State Machine] Play failed:", e);
+            }
+            console.log(`[State Machine] Spin video ${spinVideoIndex} ended. Evaluating next step.`);
         }
 
         /**
@@ -1002,8 +1113,8 @@
                     return FIGURINES_DB[key];
                 }
             }
-            // Fallback to optimal_1
-            return FIGURINES_DB['optimal_1'];
+            // Fallback to white
+            return FIGURINES_DB['white'];
         }
 
         function updateMuseumInfoCard(figurine) {
@@ -1375,8 +1486,14 @@
                 }
             };
             mocap.onPoseSuccess = function(poseKey) {
-                console.log("[Mocap Callback] Pose success! Awakening figurine.");
-                triggerMainDance();
+                console.log(`[Mocap Callback] Pose success! PoseKey: ${poseKey}`);
+                if (poseKey === 'spread_arms') {
+                    if (typeof window.onUserSpin === 'function') {
+                        window.onUserSpin();
+                    }
+                } else {
+                    triggerMainDance();
+                }
             };
         }
 

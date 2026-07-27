@@ -9,8 +9,8 @@ class MotionCaptureEngine {
         this.video = videoElement;
         this.avatar = avatarEngineInstance;
         
-        if (!this.video || !this.avatar) {
-            console.error("MotionCaptureEngine initialization failed: Video or Avatar missing!");
+        if (!this.video) {
+            console.error("MotionCaptureEngine initialization failed: Video missing!");
             return;
         }
         
@@ -23,6 +23,8 @@ class MotionCaptureEngine {
         this.activePoseKey = 'optimal_1';
         this.matchStartTime = null;
         this.requiredHoldTime = 1500;
+        
+        this.isModelReady = false; // Prevents race conditions with camera start
         
         // --- NEW: Interaction & Gesture Detection States ---
         this.spinState = 0;           // 0: Front, 1: Side, 2: Back, 3: Side 2
@@ -40,7 +42,9 @@ class MotionCaptureEngine {
         this.isStill = false;         // Active state flag
         
         this.absenceStartTime = null; // Timer for user leaving frame
-        this.isAbsent = false;         // Absence state flag
+        this.isAbsent = true;         // Absence state flag (starts true so first detection triggers return)
+        this.hasStarted = false;      // Track first valid frame
+
         
         // Callbacks to communicate with index.html frontend
         this.onPoseScore = null;   
@@ -49,13 +53,20 @@ class MotionCaptureEngine {
         // 🏺 大唐时空幻影镜——骨骼角度定义数据库
         this.targetPoses = {
             optimal_1: {
-                name: "反弹琵琶 · 双手水平",
-                description: "双手抬起至水平位置，手臂自然伸展",
+                name: "左手扬起弧度",
+                description: "只需检测左手往上举起弯曲成弧度即可",
+                angles: {
+                    // 0 = straight up, 90 = horizontal, 180 = straight down.
+                    // 60 degrees means arm raised diagonally upwards.
+                    leftShoulder: 60 
+                }
+            },
+            spread_arms: {
+                name: "拉开双臂",
+                description: "双手向两侧水平拉开",
                 angles: {
                     leftShoulder: 90,
-                    rightShoulder: 90,
-                    leftElbow: 165, // Relaxed from 180 to prevent camera perspective lock
-                    rightElbow: 165 // Relaxed from 180 to prevent camera perspective lock
+                    rightShoulder: 90
                 }
             },
             optimal_2: {
@@ -99,26 +110,36 @@ class MotionCaptureEngine {
             console.log("[Diag - initMediaPipe] Step 1: before new Pose");
             this.pose = new Pose({
                 locateFile: (file) => {
-                    console.log("MediaPipe loading asset:", file);
-                    return `mediapipe/${file}?v=106`;
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
                 }
             });
             console.log(`[Diag - initMediaPipe] Step 2: after new Pose, type of this.pose: ${typeof this.pose}`);
             
             this.pose.setOptions({
-                modelComplexity: 1, // Restored to 1 (Full) - matching the exact neural weights when it was working!
+                modelComplexity: 0, // Set to 0 (Lite) for much faster and more reliable initial detection
                 smoothLandmarks: true,
                 enableSegmentation: false,
                 smoothSegmentation: false,
-                minDetectionConfidence: 0.48, // High sensitivity fallback (lenient threshold)
-                minTrackingConfidence: 0.48
+                minDetectionConfidence: 0.40, // More lenient
+                minTrackingConfidence: 0.40
             });
             console.log("[Diag - initMediaPipe] Step 3: after setOptions");
             
             this.pose.onResults((results) => this.onPoseResults(results));
             console.log("[Diag - initMediaPipe] Step 4: after onResults");
             
-            console.log("MediaPipe Pose model loaded.");
+            // Explicitly initialize to catch errors early
+            this.pose.initialize().then(() => {
+                console.log("[Mocap Engine] ✅ MediaPipe Pose model initialized successfully!");
+                this.isModelReady = true;
+            }).catch(e => {
+                console.error("[Mocap Engine] ❌ MediaPipe Pose initialization FAILED:", e);
+                if (typeof window.updateTrackingBadge === 'function') {
+                    window.updateTrackingBadge("error", "AI加载失败");
+                }
+            });
+            
+            console.log("MediaPipe Pose model initialization started.");
         } catch (e) {
             console.error(`[Diag - initMediaPipe] CRASH! Error: ${e.message}`, e);
             throw e;
@@ -139,6 +160,8 @@ class MotionCaptureEngine {
             return;
         }
         
+        console.log("[Mocap] Starting Camera loop...");
+        
         this.isTracking = true;
         
         // Check if input is a physical webcam (has srcObject stream) or a playing video file (has src URL)
@@ -149,11 +172,16 @@ class MotionCaptureEngine {
             try {
                 this.cameraHelper = new Camera(this.video, {
                     onFrame: async () => {
-                        if (this.isTracking) {
-                            if (typeof window.incrementFrameCount === 'function') {
-                                window.incrementFrameCount();
+                        if (this.isTracking && this.isModelReady && this.pose) {
+                            if (!this.firstFrameSent) {
+                                console.log("[Mocap Engine] ✅ First frame sent to MediaPipe Pose!");
+                                this.firstFrameSent = true;
                             }
-                            await this.pose.send({ image: this.video });
+                            try {
+                                await this.pose.send({ image: this.video });
+                            } catch(e) {
+                                console.warn("[Mocap Engine] Frame send error:", e);
+                            }
                         }
                     },
                     width: 640,
@@ -170,7 +198,7 @@ class MotionCaptureEngine {
             const frameLoop = async () => {
                 if (!this.isTracking) return;
                 
-                if (!this.video.paused && !this.video.ended) {
+                if (!this.video.paused && !this.video.ended && this.isModelReady && this.pose) {
                     try {
                         if (typeof window.incrementFrameCount === 'function') {
                             window.incrementFrameCount();
@@ -214,18 +242,18 @@ class MotionCaptureEngine {
      * Callback when MediaPipe Pose completes image analysis on a frame
      */
     onPoseResults(results) {
-        if (typeof window.incrementResultCount === 'function') {
-            window.incrementResultCount();
+        if (!this.firstResultReceived) {
+            console.log("[Mocap Engine] ✅ First result RECEIVED from MediaPipe Pose!");
+            this.firstResultReceived = true;
         }
         
-        if (!this.avatar) {
-            if (typeof window.updateTrackingBadge === 'function') {
-                window.updateTrackingBadge("error", "3D化身引擎未就绪");
-            }
-            return;
-        }
+
 
         if (!results.poseLandmarks) {
+            if (!this.lastNoLandmarkLog || Date.now() - this.lastNoLandmarkLog > 2000) {
+                console.log("[Mocap Engine] No landmarks detected in frame. Waiting for person to enter frame...");
+                this.lastNoLandmarkLog = Date.now();
+            }
             if (typeof window.updateTrackingBadge === 'function') {
                 window.updateTrackingBadge("warning", "未识别到人物姿态");
             }
@@ -251,8 +279,28 @@ class MotionCaptureEngine {
         }
         
         // Reset absence on active detection
+        if (this.isAbsent) {
+            console.log("[Mocap Engine] User has RETURNED to the scene");
+            this.isAbsent = false;
+            if (typeof window.onUserActive === 'function') {
+                window.onUserActive();
+            }
+        }
+        
+        if (!this.hasStarted) {
+            console.log("[Mocap Engine] First time detection!");
+            this.hasStarted = true;
+            if (typeof window.onUserActive === 'function') {
+                window.onUserActive();
+            }
+        }
+        
+        // Always fire detected callback if user is present
+        if (typeof window.onUserDetected === 'function') {
+            window.onUserDetected();
+        }
+        
         this.absenceStartTime = null;
-        this.isAbsent = false;
         
         const landmarks = (results.poseWorldLandmarks && results.poseWorldLandmarks.length >= 29) 
                           ? results.poseWorldLandmarks 
@@ -417,6 +465,102 @@ class MotionCaptureEngine {
                 return indices.every(idx => lm[idx] !== undefined && lm[idx] !== null);
             };
 
+            // --- ULTRA-ROBUST SPREAD ARMS OVERRIDE ---
+            if (this.activePoseKey === 'spread_arms') {
+                let isSpread = false;
+                
+                const shoulderY = (lm[11] && lm[12]) ? (lm[11].y + lm[12].y) / 2 : 0.5;
+                const shoulderDist = (lm[11] && lm[12]) ? Math.abs(lm[11].x - lm[12].x) : 0.15;
+                
+                // Dynamically calculate belly height using hips if available, otherwise fallback to shoulder proportions
+                let hipY = 0.8;
+                if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
+                else hipY = shoulderY + shoulderDist * 2.5;
+                
+                const bellyY = shoulderY + (hipY - shoulderY) * 0.7; 
+
+                // Wrists must be lifted above the belly button. When standing idly, wrists are at/below hips.
+                const handsLifted = (lm[15] && lm[15].y < bellyY) || (lm[16] && lm[16].y < bellyY);
+                
+                if (handsLifted) {
+                    // 1. Check elbows (for an embrace, elbows stick out wide)
+                    if (hasLandmarks([11, 12, 13, 14])) {
+                        const elbowDist = Math.abs(lm[13].x - lm[14].x);
+                        if (elbowDist > shoulderDist * 1.5) isSpread = true; 
+                    }
+                    
+                    // 2. Check wrists (for horizontal spread)
+                    if (!isSpread && hasLandmarks([11, 12, 15, 16])) {
+                        const wristDist = Math.abs(lm[15].x - lm[16].x);
+                        if (wristDist > shoulderDist * 1.8) isSpread = true; 
+                    }
+                }
+                
+                if (isSpread) {
+                    if (!this.matchStartTime) {
+                        this.matchStartTime = Date.now();
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `姿势契合！保持住... (Hold pose...)`);
+                    } else {
+                        const duration = Date.now() - this.matchStartTime;
+                        const progress = Math.min(100, Math.round((duration / 400) * 100)); // Fast 400ms trigger
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `时空共振中: ${progress}%`);
+                        
+                        if (duration >= 400) { 
+                            this.matchStartTime = null;
+                            this.isPoseTriggerMode = false;
+                            if (this.onPoseSuccess) this.onPoseSuccess(this.activePoseKey);
+                        }
+                    }
+                } else {
+                    if (this.matchStartTime) {
+                        this.matchStartTime = null;
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请重新拉开双臂`);
+                    }
+                }
+                return; // Override standard angle scoring
+            }
+
+            // --- ULTRA-ROBUST RAISE HANDS (optimal_1) OVERRIDE ---
+            if (this.activePoseKey === 'optimal_1') {
+                let isRaised = false;
+                
+                // Check if AT LEAST ONE wrist is raised above the shoulder
+                if (hasLandmarks([15, 11]) && lm[15].y < lm[11].y) {
+                    isRaised = true; // Left hand up
+                } else if (hasLandmarks([16, 12]) && lm[16].y < lm[12].y) {
+                    isRaised = true; // Right hand up
+                } 
+                // Fallback to elbows
+                else if (hasLandmarks([13, 11]) && lm[13].y < lm[11].y) {
+                    isRaised = true; // Left elbow up
+                } else if (hasLandmarks([14, 12]) && lm[14].y < lm[12].y) {
+                    isRaised = true; // Right elbow up
+                }
+                
+                if (isRaised) {
+                    if (!this.matchStartTime) {
+                        this.matchStartTime = Date.now();
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `姿势契合！保持住...`);
+                    } else {
+                        const duration = Date.now() - this.matchStartTime;
+                        const progress = Math.min(100, Math.round((duration / 400) * 100)); // Fast 400ms trigger
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `时空共振中: ${progress}%`);
+                        
+                        if (duration >= 400) { 
+                            this.matchStartTime = null;
+                            this.isPoseTriggerMode = false;
+                            if (this.onPoseSuccess) this.onPoseSuccess(this.activePoseKey);
+                        }
+                    }
+                } else {
+                    if (this.matchStartTime) {
+                        this.matchStartTime = null;
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请举起单臂`);
+                    }
+                }
+                return; // Override standard angle scoring
+            }
+
             // --- DECOUPLED ON-DEMAND JOINT CALCULATIONS ---
             
             // 1. Left Arm (tracked only if needed, independent of right arm)
@@ -564,7 +708,35 @@ class MotionCaptureEngine {
         const pL = lm[11]; // Left Shoulder
         const pR = lm[12]; // Right Shoulder
 
-        // ================= 1. 360-DEGREE SPIN DETECTION =================
+        // ================= 1. 360-DEGREE SPIN DETECTION & CONTINUOUS SPREAD ARMS =================
+        if (lm) {
+            let isSpread = false;
+            const shoulderY = (lm[11] && lm[12]) ? (lm[11].y + lm[12].y) / 2 : 0.5;
+            const shoulderDist = (lm[11] && lm[12]) ? Math.abs(lm[11].x - lm[12].x) : 0.15;
+            
+            let hipY = 0.8;
+            if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
+            else hipY = shoulderY + shoulderDist * 2.5;
+            
+            const bellyY = shoulderY + (hipY - shoulderY) * 0.7;
+            const handsLifted = (lm[15] && lm[15].y < bellyY) || (lm[16] && lm[16].y < bellyY);
+            
+            if (handsLifted) {
+                if (lm[11] && lm[12] && lm[13] && lm[14]) {
+                    const elbowDist = Math.abs(lm[13].x - lm[14].x);
+                    if (elbowDist > shoulderDist * 1.5) isSpread = true;
+                }
+                if (!isSpread && lm[11] && lm[12] && lm[15] && lm[16]) {
+                    const wristDist = Math.abs(lm[15].x - lm[16].x);
+                    if (wristDist > shoulderDist * 1.8) isSpread = true;
+                }
+            }
+            this.isCurrentlySpreadingArms = isSpread;
+            if (isSpread) {
+                this.lastSpreadArmsTime = Date.now();
+            }
+        }
+
         if (pL && pR) {
             const currentWidth = Math.abs(pL.x - pR.x);
             
@@ -684,10 +856,10 @@ class MotionCaptureEngine {
             if (this.movementIntensity < STILL_THRESHOLD) {
                 if (!this.stillStartTime) {
                     this.stillStartTime = now;
-                } else if (now - this.stillStartTime > 1600) { // Still for 1.6 seconds
+                } else if (now - this.stillStartTime > 15000) { // Still for 15 seconds
                     if (!this.isStill) {
                         this.isStill = true;
-                        console.log("[Mocap Engine] User is STILL");
+                        console.log("[Mocap Engine] User is STILL for 15 seconds");
                         if (typeof window.onUserStill === 'function') {
                             window.onUserStill(false); // User is just still
                         }
