@@ -946,6 +946,12 @@
             };
 
             window.onUserStill = function(isAbsent) {
+                if (isAbsent && window.presenceTimer) {
+                    console.log("[State Machine] User left before 5 seconds. Cancelling cinematic trigger.");
+                    clearTimeout(window.presenceTimer);
+                    window.presenceTimer = null;
+                }
+
                 // If user leaves frame, or is still (hands down) for 15 seconds
                 if (currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.STANDBY_WAIT) {
                     console.log(`[State Machine] User ${isAbsent ? 'left the scene' : 'is still for 15s'} -> OUTRO_VIDEO`);
@@ -955,8 +961,16 @@
 
             window.onUserDetected = function() {
                 if (currentState === AppState.STANDBY_LOOP) {
-                    console.log("[State Machine] User presence detected! Auto-starting cinematic flow.");
-                    startCinematicFlow();
+                    if (!window.presenceTimer) {
+                        console.log("[State Machine] User detected, waiting 5 seconds before pulling curtain...");
+                        window.presenceTimer = setTimeout(() => {
+                            if (currentState === AppState.STANDBY_LOOP) {
+                                console.log("[State Machine] User presence confirmed for 5 seconds! Auto-starting cinematic flow.");
+                                startCinematicFlow();
+                            }
+                            window.presenceTimer = null;
+                        }, 5000);
+                    }
                 }
             };
             
