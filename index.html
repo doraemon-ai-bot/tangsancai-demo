@@ -203,7 +203,7 @@
 
         <!-- 1. The True Background Image -->
         <div class="absolute inset-0 z-0 flex items-center justify-center">
-            <img src="video/真真正正的背景.png" class="w-full h-full object-contain" alt="Real Background" />
+            <img src="video/real_background.png" class="w-full h-full object-contain" alt="Real Background" />
         </div>
 
         <!-- 2. The Vertical Holographic Mirror (Height: 680px, Width: 100%) -->
@@ -222,7 +222,7 @@
                 
                 <!-- 2b. Pre-rendered Video Player Overlay (for awakening dance) -->
                 <!-- 2b. Pre-rendered Video Player Overlays (Double Buffer for Seamless Crossfading) -->
-                <video id="videoPlayerA" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" src="video/开头.mp4" muted autoplay loop playsinline></video>
+                <video id="videoPlayerA" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" src="video/intro.mp4" muted autoplay loop playsinline></video>
                 <video id="videoPlayerB" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" muted autoplay loop playsinline></video>
                 
                 <!-- OVERLAY player for the Opening Curtain (mix-blend-mode: screen makes black transparent) -->
@@ -355,7 +355,7 @@
     <!-- --- FIGURINES DATABASE (Carousel Exhibit Database) --- -->
     <script>
         // 🏺 大唐时空幻影镜——展项资产数据库 (Single Figurine Database)
-        const SPIN_LOOP_VIDEOS = ['video/大花到圆头.mp4', 'video/圆头到蓝花.mp4', 'video/蓝花到条纹.mp4'];
+        const SPIN_LOOP_VIDEOS = ['video/big_flower_to_round.mp4', 'video/round_to_blue_flower.mp4', 'video/blue_flower_to_stripe.mp4'];
         const FIGURINES_DB = {
             red: {
                 id: "red",
@@ -366,8 +366,8 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_red.mp4",
-                danceVideo: "video/红胡旋.mp4",
-                firstSpinVideo: "video/红到大花.mp4",
+                danceVideo: "video/red_dance.mp4",
+                firstSpinVideo: "video/red_to_big.mp4",
                 outroVideo: "final_vid/red1.mp4",
                 tags: { color: "红" }
             },
@@ -380,8 +380,8 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_blue.mp4",
-                danceVideo: "video/蓝胡旋.mp4",
-                firstSpinVideo: "video/蓝到大花.mp4",
+                danceVideo: "video/blue_dance.mp4",
+                firstSpinVideo: "video/blue_to_big.mp4",
                 outroVideo: "final_vid/blue1.mp4",
                 tags: { color: "蓝" }
             },
@@ -394,8 +394,8 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_black.mp4",
-                danceVideo: "video/黑胡旋.mp4",
-                firstSpinVideo: "video/黑到大花.mp4",
+                danceVideo: "video/black_dance.mp4",
+                firstSpinVideo: "video/black_to_big.mp4",
                 outroVideo: "final_vid/black1.mp4",
                 tags: { color: "黑" }
             },
@@ -408,8 +408,8 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_white.mp4",
-                danceVideo: "video/白胡旋.mp4",
-                firstSpinVideo: "video/白到大花.mp4",
+                danceVideo: "video/white_dance.mp4",
+                firstSpinVideo: "video/white_to_big.mp4",
                 outroVideo: "final_vid/white1.mp4",
                 tags: { color: "白" }
             },
@@ -422,8 +422,8 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：双手抬至水平",
                 revealVideo: "assets/videos/1_reveal_gray.mp4",
-                danceVideo: "video/灰胡旋.mp4",
-                firstSpinVideo: "video/灰到大花.mp4",
+                danceVideo: "video/gray_dance.mp4",
+                firstSpinVideo: "video/gray_to_big.mp4",
                 outroVideo: "final_vid/gray1.mp4",
                 tags: { color: "灰" }
             }
@@ -753,7 +753,7 @@
             if (standbyOverlay) {
                 standbyOverlay.classList.add('hidden'); // Hide the static image
             }
-            playSeamlessVideo("video/开头.mp4", true, 'normal');
+            playSeamlessVideo("video/intro.mp4", true, 'normal');
             
             // 4. Reset Awaken Button
             const awakenContainer = document.getElementById('awakenButtonContainer');
@@ -798,7 +798,7 @@
             // Trigger VLM match without blocking
             triggerSilentBackgroundMatch().catch(e => console.error("[State Machine] Match failed:", e));
             
-            console.log(`[State Machine] Playing intro video: video/开幕_终.mp4`);
+            console.log(`[State Machine] Playing intro video: video/curtain.mp4`);
             
             // Hide start overlay so it's not clickable anymore
             const startOverlay = document.getElementById('startOverlay');
@@ -838,8 +838,8 @@
             // 2. Play the curtain video on the OVERLAY player (with screen blend mode to make black transparent)
             const curtainPlayer = document.getElementById('curtainOverlayPlayer');
             if (curtainPlayer) {
-                console.log(`[State Machine] Playing intro curtain video (overlay): video/开幕_终.mp4`);
-                curtainPlayer.src = "video/开幕_终.mp4";
+                console.log(`[State Machine] Playing intro curtain video (overlay): video/curtain.mp4`);
+                curtainPlayer.src = "video/curtain.mp4";
                 curtainPlayer.style.opacity = '1';
                 curtainPlayer.style.transition = '';
                 curtainPlayer.classList.remove('hidden');
@@ -970,7 +970,7 @@
             
             const matchedId = window.matchedFigurineId || 'white';
             const figurine = FIGURINES_DB[matchedId];
-            const danceVid = figurine ? figurine.danceVideo : "video/白胡旋.mp4";
+            const danceVid = figurine ? figurine.danceVideo : "video/white_dance.mp4";
             
             if (mocap) {
                 mocap.spinState = 0;
@@ -1019,7 +1019,7 @@
             
             let spinVideoSrc = "";
             if (spinVideoIndex === 0) {
-                spinVideoSrc = figurine ? figurine.firstSpinVideo : "video/白到大花.mp4";
+                spinVideoSrc = figurine ? figurine.firstSpinVideo : "video/white_to_big.mp4";
             } else {
                 spinVideoSrc = SPIN_LOOP_VIDEOS[(spinVideoIndex - 1) % SPIN_LOOP_VIDEOS.length];
             }
