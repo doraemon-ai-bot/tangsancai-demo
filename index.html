@@ -229,8 +229,8 @@
                 <video id="curtainOverlayPlayer" class="absolute inset-0 w-full h-full object-contain z-30 hidden pointer-events-none" style="mix-blend-mode: screen;" playsinline preload="auto"></video>
                 
                 <!-- NEW: Prompt Overlays (Dance and Material) -->
-                <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/提示跳舞.png" alt="提示跳舞" />
-                <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/提示换材质.png" alt="提示换材质" />
+                <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_dance.png" alt="提示跳舞" />
+                <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
                 <!-- 2c. Standby Silhouette Image Overlay (State: STANDBY_LOOP) -->
                 <img id="standbySilhouetteOverlay" class="hidden absolute inset-0 w-full h-full object-contain z-20 transition-opacity duration-500 opacity-100" src="assets/videos/silhouette.png" alt="Silhouette Attract Loop" />
@@ -368,7 +368,7 @@
                 revealVideo: "assets/videos/1_reveal_red.mp4",
                 danceVideo: "video/红胡旋.mp4",
                 firstSpinVideo: "video/红到大花.mp4",
-                outroVideo: "final_vid/红1.mp4",
+                outroVideo: "final_vid/red1.mp4",
                 tags: { color: "红" }
             },
             blue: {
@@ -382,7 +382,7 @@
                 revealVideo: "assets/videos/1_reveal_blue.mp4",
                 danceVideo: "video/蓝胡旋.mp4",
                 firstSpinVideo: "video/蓝到大花.mp4",
-                outroVideo: "final_vid/蓝1.mp4",
+                outroVideo: "final_vid/blue1.mp4",
                 tags: { color: "蓝" }
             },
             black: {
@@ -396,7 +396,7 @@
                 revealVideo: "assets/videos/1_reveal_black.mp4",
                 danceVideo: "video/黑胡旋.mp4",
                 firstSpinVideo: "video/黑到大花.mp4",
-                outroVideo: "final_vid/黑1.mp4",
+                outroVideo: "final_vid/black1.mp4",
                 tags: { color: "黑" }
             },
             white: {
@@ -410,7 +410,7 @@
                 revealVideo: "assets/videos/1_reveal_white.mp4",
                 danceVideo: "video/白胡旋.mp4",
                 firstSpinVideo: "video/白到大花.mp4",
-                outroVideo: "final_vid/白1.mp4",
+                outroVideo: "final_vid/white1.mp4",
                 tags: { color: "白" }
             },
             gray: {
@@ -424,7 +424,7 @@
                 revealVideo: "assets/videos/1_reveal_gray.mp4",
                 danceVideo: "video/灰胡旋.mp4",
                 firstSpinVideo: "video/灰到大花.mp4",
-                outroVideo: "final_vid/灰1.mp4",
+                outroVideo: "final_vid/gray1.mp4",
                 tags: { color: "灰" }
             }
         };
@@ -870,7 +870,7 @@
             
             const matchedId = window.matchedFigurineId || 'white';
             const figurine = FIGURINES_DB[matchedId];
-            const outroVid = figurine ? figurine.outroVideo : "final_vid/白1.mp4";
+            const outroVid = figurine ? figurine.outroVideo : "final_vid/white1.mp4";
             
             console.log(`[State Machine] Playing outro video: ${outroVid}`);
             try {
