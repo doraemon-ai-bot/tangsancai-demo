@@ -524,23 +524,19 @@ class MotionCaptureEngine {
             if (this.activePoseKey === 'optimal_1') {
                 let isRaised = false;
                 
-                // Check if AT LEAST ONE wrist is raised above the shoulder
+                // Strictly check if LEFT wrist (landmark 15) is raised above left shoulder (landmark 11)
                 if (hasLandmarks([15, 11]) && lm[15].y < lm[11].y) {
                     isRaised = true; // Left hand up
-                } else if (hasLandmarks([16, 12]) && lm[16].y < lm[12].y) {
-                    isRaised = true; // Right hand up
                 } 
-                // Fallback to elbows
+                // Fallback to left elbow
                 else if (hasLandmarks([13, 11]) && lm[13].y < lm[11].y) {
                     isRaised = true; // Left elbow up
-                } else if (hasLandmarks([14, 12]) && lm[14].y < lm[12].y) {
-                    isRaised = true; // Right elbow up
                 }
                 
                 if (isRaised) {
                     if (!this.matchStartTime) {
                         this.matchStartTime = Date.now();
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `姿势契合！保持住...`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `识别到举左手！保持住...`);
                     } else {
                         const duration = Date.now() - this.matchStartTime;
                         const progress = Math.min(100, Math.round((duration / 400) * 100)); // Fast 400ms trigger
@@ -555,7 +551,7 @@ class MotionCaptureEngine {
                 } else {
                     if (this.matchStartTime) {
                         this.matchStartTime = null;
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请举起单臂`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请举起左手`);
                     }
                 }
                 return; // Override standard angle scoring

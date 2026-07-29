@@ -314,7 +314,8 @@
                 desc: "红色衣裳唤醒红釉乐人，作琵琶横笛之乐，雍容华美。",
                 image: "assets/images/card_red.png",
                 poseKey: "optimal_1",
-                poseLabel: "正在挑战：双手抬至水平",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_red_0s.jpg",
                 revealVideo: "assets/videos/1_reveal_red.mp4",
                 danceVideo: "video/red_dance.mp4",
                 firstSpinVideo: "video/red_to_big.mp4",
@@ -329,7 +330,8 @@
                 desc: "蓝色衣裳唤醒蓝釉乐人，袖舞翩跹，尽显盛唐风采。",
                 image: "assets/images/card_blue.png",
                 poseKey: "optimal_1",
-                poseLabel: "正在挑战：双手抬至水平",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_blue_0s.jpg",
                 revealVideo: "assets/videos/1_reveal_blue.mp4",
                 danceVideo: "video/blue_dance.mp4",
                 firstSpinVideo: "video/blue_to_big.mp4",
@@ -344,7 +346,8 @@
                 desc: "黑色衣裳唤醒黑釉乐人，姿态古雅，如水墨山水。",
                 image: "assets/images/card_black.png",
                 poseKey: "optimal_1",
-                poseLabel: "正在挑战：双手抬至水平",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_black_0s.jpg",
                 revealVideo: "assets/videos/1_reveal_black.mp4",
                 danceVideo: "video/black_dance.mp4",
                 firstSpinVideo: "video/black_to_big.mp4",
@@ -359,7 +362,8 @@
                 desc: "白色衣裳唤醒白釉乐人，皎皎若月，温婉动人。",
                 image: "assets/images/card_white.png",
                 poseKey: "optimal_1",
-                poseLabel: "正在挑战：双手抬至水平",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_white_0s.jpg",
                 revealVideo: "assets/videos/1_reveal_white.mp4",
                 danceVideo: "video/white_dance.mp4",
                 firstSpinVideo: "video/white_to_big.mp4",
@@ -374,7 +378,8 @@
                 desc: "灰色衣裳唤醒灰釉乐人，素雅淡远，极具青铜古韵。",
                 image: "assets/images/card_gray.png",
                 poseKey: "optimal_1",
-                poseLabel: "正在挑战：双手抬至水平",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_gray_0s.jpg",
                 revealVideo: "assets/videos/1_reveal_gray.mp4",
                 danceVideo: "video/gray_dance.mp4",
                 firstSpinVideo: "video/gray_to_big.mp4",
@@ -750,11 +755,6 @@
             if (playerA) playerA.muted = true;
             if (playerB) playerB.muted = true;
             
-            // Trigger VLM match without blocking
-            triggerSilentBackgroundMatch().catch(e => console.error("[State Machine] Match failed:", e));
-            
-            console.log(`[State Machine] Playing intro video: video/curtain.mp4`);
-            
             // Hide start overlay so it's not clickable anymore
             const startOverlay = document.getElementById('startOverlay');
             if (startOverlay) {
@@ -762,15 +762,54 @@
             }
             
             const matchedId = window.matchedFigurineId || 'white';
-            const figurine = FIGURINES_DB[matchedId];
-            const revealVid = figurine ? figurine.revealVideo : "assets/videos/1_reveal_white.mp4";
+            const figurine = FIGURINES_DB[matchedId] || FIGURINES_DB['white'];
             
-            // We want the curtain video to play OVER the reveal video.
-            // 1. Play the reveal video on the MAIN background player
-            console.log(`[State Machine] Playing color-matched reveal video (underneath): ${revealVid}`);
+            // --- 阶段 2: 开启拉帘 (INTRO_REVEAL) ---
+            // 下层：保持显示对应颜色的 0秒首帧静态图 (reveal_{color}_0s.jpg)
+            const stageImg = document.getElementById('stageFigurineImg');
+            if (stageImg && figurine.reveal0sImage) {
+                stageImg.src = figurine.reveal0sImage;
+                stageImg.classList.remove('opacity-0');
+                stageImg.classList.add('opacity-100');
+            }
+            
+            // 上层：播放开幕拉帘视频 video/curtain.mp4 (mix-blend-mode: screen)
+            const curtainPlayer = document.getElementById('curtainOverlayPlayer');
+            const curtainPromise = new Promise((resolve) => {
+                if (curtainPlayer) {
+                    console.log(`[State Machine] Playing intro curtain video (overlay): video/curtain.mp4`);
+                    curtainPlayer.src = "video/curtain.mp4";
+                    curtainPlayer.style.opacity = '1';
+                    curtainPlayer.style.transition = '';
+                    curtainPlayer.classList.remove('hidden');
+                    
+                    curtainPlayer.onended = () => {
+                        curtainPlayer.classList.add('hidden');
+                        resolve();
+                    };
+                    curtainPlayer.play().catch(e => {
+                        console.error("Curtain play failed:", e);
+                        resolve();
+                    });
+                } else {
+                    resolve();
+                }
+            });
+            
+            // 等待拉帘 5 秒播放完成
+            await curtainPromise;
+            
+            // --- 阶段 2b: 独立出场视频环节 (纯播放 1_reveal_{color}.mp4，无 curtain overlay!) ---
+            console.log(`[State Machine] Curtain finished -> Playing reveal video (clean): ${figurine.revealVideo}`);
+            
+            // 隐藏下层静态 0秒首帧图片，展示纯视频播放
+            if (stageImg) {
+                stageImg.classList.remove('opacity-100');
+                stageImg.classList.add('opacity-0');
+            }
             
             const showPromptCallback = () => {
-                console.log("[State Machine] Reveal video ended -> STANDBY_WAIT");
+                console.log("[State Machine] Reveal video ended -> STANDBY_WAIT (Raise Left Hand Challenge)");
                 currentState = AppState.STANDBY_WAIT;
                 
                 // Show "Prompt Dance" PNG at the very end
@@ -788,29 +827,10 @@
                 }
             };
             
-            const playRevealPromise = playSeamlessVideo(revealVid, false, 'screen', showPromptCallback);
-            
-            // 2. Play the curtain video on the OVERLAY player (with screen blend mode to make black transparent)
-            const curtainPlayer = document.getElementById('curtainOverlayPlayer');
-            if (curtainPlayer) {
-                console.log(`[State Machine] Playing intro curtain video (overlay): video/curtain.mp4`);
-                curtainPlayer.src = "video/curtain.mp4";
-                curtainPlayer.style.opacity = '1';
-                curtainPlayer.style.transition = '';
-                curtainPlayer.classList.remove('hidden');
-                
-                curtainPlayer.play().catch(e => console.error("Curtain play failed:", e));
-                
-                curtainPlayer.onended = () => {
-                    curtainPlayer.classList.add('hidden');
-                };
-            }
-            
             try {
-                // Wait for the background reveal video to finish
-                await playRevealPromise;
+                await playSeamlessVideo(figurine.revealVideo, false, 'normal', showPromptCallback);
             } catch (e) {
-                console.error("[State Machine] Play failed:", e);
+                console.error("[State Machine] Play reveal video failed:", e);
             }
         }
 
@@ -906,7 +926,11 @@
             window.onUserDetected = function() {
                 if (currentState === AppState.STANDBY_LOOP) {
                     if (!window.presenceTimer) {
-                        console.log("[State Machine] User detected, waiting 5 seconds before pulling curtain...");
+                        console.log("[State Machine] User detected! Running VLM color match and starting 5s presence countdown...");
+                        
+                        // Immediately run VLM match and update lower layer image to reveal_{color}_0s.jpg
+                        triggerSilentBackgroundMatch().catch(e => console.error("[State Machine] Match failed:", e));
+
                         window.presenceTimer = setTimeout(() => {
                             if (currentState === AppState.STANDBY_LOOP) {
                                 console.log("[State Machine] User presence confirmed for 5 seconds! Auto-starting cinematic flow.");
@@ -1284,6 +1308,14 @@
             const matchedFigurine = matchFigurineByColor(window.detectedColor);
             window.matchedFigurineId = matchedFigurine.id;
             updateMuseumInfoCard(matchedFigurine);
+            
+            // Immediately display 0s frame image for matched color under intro video
+            const stageImg = document.getElementById('stageFigurineImg');
+            if (stageImg && matchedFigurine.reveal0sImage) {
+                stageImg.src = matchedFigurine.reveal0sImage;
+                stageImg.classList.remove('opacity-0');
+                stageImg.classList.add('opacity-100');
+            }
             
             const cleanDisplay = rawText.trim().replace(/[\r\n]+/g, ' ').substring(0, 40);
             updateTrackingBadge("success", `感应结果: ${window.detectedColor} ("${cleanDisplay}...")`);
