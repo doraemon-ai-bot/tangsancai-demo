@@ -222,6 +222,17 @@
                 <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_dance.png" alt="提示跳舞" />
                 <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
+                <!-- Outro Random Blessing Overlay (State: OUTRO_VIDEO End) -->
+                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 bg-neutral-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-8 transition-opacity duration-700 opacity-0 pointer-events-none">
+                    <div class="border-2 border-[#d4af37]/40 bg-[#161614]/90 rounded-3xl p-8 max-w-lg w-full text-center shadow-[0_0_60px_rgba(212,175,55,0.25)] flex flex-col items-center space-y-4 transform scale-95 transition-all duration-700">
+                        <div class="text-[10px] font-classical text-[#d4af37]/70 tracking-[0.3em] uppercase">盛唐·永福呈祥</div>
+                        <div id="outroBlessingText" class="text-2xl font-classical font-bold text-[#d4af37] tracking-[0.25em] py-4 border-y border-[#d4af37]/20 w-full text-center drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]">
+                            一舞千年，余韵绕梁
+                        </div>
+                        <div class="text-[9px] font-roman text-amber-100/50 tracking-widest">MUSEUM COMMEMORATIVE BLESSING</div>
+                    </div>
+                </div>
+                
                 <!-- 2c. Standby Silhouette Image Overlay (State: STANDBY_LOOP) -->
                 <img id="standbySilhouetteOverlay" class="hidden absolute inset-0 w-full h-full object-contain z-20 transition-opacity duration-500 opacity-100" src="assets/videos/silhouette.png" alt="Silhouette Attract Loop" />
                 
@@ -306,6 +317,21 @@
     <script>
         // 🏺 大唐时空幻影镜——展项资产数据库 (Single Figurine Database)
         const SPIN_LOOP_VIDEOS = ['video/big_flower_to_round.mp4', 'video/round_to_blue_flower.mp4', 'video/blue_flower_to_stripe.mp4'];
+        
+        // 📜 50 盛唐典雅祝福语典库 (1/50 随机抽取)
+        const BLESSINGS_50 = [
+            "霓裳焕彩，仪态万方", "锦衣华服，风华绝代", "云鬓花颜，顾盼生辉", "罗衣翩然，容止端丽", "珠翠生光，眉目如画",
+            "素衣胜雪，清雅出尘", "朱衣灼灼，艳冠群芳", "青衫磊落，风骨不凡", "黛眉远岫，绿鬓堆烟", "衣冠胜唐，气韵东方",
+            "弦鼓声动，旋身入唐", "左旋右转，回雪飘飘", "千匝万周，意犹未尽", "足踏圆毯，袖拂流云", "翩若惊鸿，婉若游龙",
+            "与俑共舞，梦回盛唐", "衣袂飞扬，神采奕奕", "一舞千年，余韵绕梁", "刚柔并济，行云流水", "旋若疾风，止若静湖",
+            "千年邂逅，今宵共舞", "俑前相遇，舞中相知", "盛世重逢，恰逢其时", "一眼千年，共此良辰", "穿越时空，与君同乐",
+            "萍水相逢，舞动情缘", "彼时唐俑，今夕知音", "千载难逢，舞梦成真", "人俑相映，古今交融", "有缘相逢，共舞长风",
+            "长乐未央，永受嘉福", "万事胜意，皆得所愿", "平安喜乐，顺遂无忧", "吉庆有余，福泽绵长", "祥瑞满堂，福慧双修",
+            "如意安康，岁岁欢愉", "嘉祥骈至，福寿安康", "百事从欢，万事随心", "鸿运当头，锦绣前程", "福星高照，喜乐长安",
+            "盛世重光，大唐气象", "万里山河，共耀华章", "丝路驼铃，梦回长安", "昭昭有唐，天俾万国", "千秋文明，薪火相传",
+            "东方既白，永续辉煌", "海纳百川，有容乃大", "物华天宝，人杰地灵", "开放包容，盛世之风", "富贵长安，万世流芳"
+        ];
+
         const FIGURINES_DB = {
             red: {
                 id: "red",
@@ -852,6 +878,28 @@
                 await playSeamlessVideo(outroVid, false, 'normal');
             } catch (e) {
                 console.error("[State Machine] Play failed:", e);
+            }
+            
+            // Pick a 1/50 random blessing at the end of the outro video
+            const randomBlessing = BLESSINGS_50[Math.floor(Math.random() * BLESSINGS_50.length)];
+            console.log(`[State Machine] Outro video ended -> Random 1/50 Blessing: "${randomBlessing}"`);
+            
+            const blessingOverlay = document.getElementById('outroBlessingOverlay');
+            const blessingText = document.getElementById('outroBlessingText');
+            if (blessingOverlay && blessingText) {
+                blessingText.innerText = randomBlessing;
+                blessingOverlay.classList.remove('hidden');
+                void blessingOverlay.offsetWidth;
+                blessingOverlay.classList.remove('opacity-0');
+                blessingOverlay.classList.add('opacity-100');
+                
+                // Display blessing for 3.5 seconds then reset kiosk back to STANDBY_LOOP
+                await new Promise(r => setTimeout(r, 3500));
+                
+                blessingOverlay.classList.remove('opacity-100');
+                blessingOverlay.classList.add('opacity-0');
+                await new Promise(r => setTimeout(r, 700));
+                blessingOverlay.classList.add('hidden');
             }
             
             console.log("[State Machine] Outro video ended -> returning to STANDBY_LOOP");
