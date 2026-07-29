@@ -50,7 +50,7 @@ class MotionCaptureEngine {
         this.onPoseScore = null;   
         this.onPoseSuccess = null; 
 
-        // 🏺 大唐时空幻影镜——骨骼角度定义数据库
+        // 🏺 乐舞胡旋——骨骼角度定义数据库
         this.targetPoses = {
             optimal_1: {
                 name: "左手扬起弧度",
