@@ -179,10 +179,8 @@
     </style>
     
     <!-- --- CDNs FOR 3D GRAPHICS & MOTION CAPTURE --- -->
-    <!-- 1. Three.js -->
+    <!-- 1. Three.js (used by motion_capture.js for vector math) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- 2. OrbitControls -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <!-- 3. MediaPipe Pose (Using CDN because local might fail worker/wasm load) -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <!-- 4. MediaPipe Camera Utils -->
@@ -1266,6 +1264,13 @@
             } else {
                 // Local Ollama Moondream path (Native endpoint!)
                 const endpoint = document.getElementById('apiEndpoint')?.value || 'http://localhost:11434';
+                
+                // HTTPS Mixed Content Guard: Browser blocks http://localhost from https:// Pages
+                if (window.location.protocol === 'https:' && endpoint.startsWith('http:')) {
+                    console.log("[AI Match] HTTPS mixed content guard: local HTTP Ollama endpoint bypassed on static HTTPS host.");
+                    return { mappedColor: "白", rawText: "Static HTTPS Fallback" };
+                }
+                
                 const cleanEndpoint = endpoint.replace(/\/v1\/?$/, '').replace(/\/$/, '');
                 const url = `${cleanEndpoint}/api/generate`;
                 
@@ -1386,6 +1391,13 @@
             } else {
                 // Local Ollama Gemma path (Text only!)
                 const endpoint = document.getElementById('apiEndpoint')?.value || 'http://localhost:11434';
+                
+                // HTTPS Mixed Content Guard: Browser blocks http://localhost from https:// Pages
+                if (window.location.protocol === 'https:' && endpoint.startsWith('http:')) {
+                    console.log("[AI Blessing] HTTPS mixed content guard: local HTTP Ollama endpoint bypassed on static HTTPS host.");
+                    return "岁岁平安";
+                }
+                
                 const cleanEndpoint = endpoint.replace(/\/v1\/?$/, '').replace(/\/$/, '');
                 const url = `${cleanEndpoint}/v1/chat/completions`;
                 
