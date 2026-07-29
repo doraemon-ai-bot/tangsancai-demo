@@ -251,7 +251,7 @@
                 </div>
                 
                 <!-- 3. Sancai Figurine Hologram Overlay (used for silhouette/hologram projection) -->
-                <img id="stageFigurineImg" class="absolute inset-0 w-full h-full object-contain select-none transition-all duration-700 z-10 opacity-0 filter drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" src="assets/images/optimal_1.jpg" alt="Tang Figurine Hologram" />
+                <img id="stageFigurineImg" class="absolute inset-0 w-full h-full object-contain select-none transition-all duration-700 z-10 opacity-0 filter drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" src="assets/images/card_white.png" alt="Tang Figurine Hologram" />
                 
                 <!-- 4. SVG Silhouette Overlay (for guiding pose, hidden in new flow but kept for structure) -->
                 <svg id="poseSilhouetteSVG" class="absolute inset-0 w-full h-full pointer-events-none opacity-0 select-none z-30 hidden" style="transform: scaleX(-1); transform-origin: center;" viewBox="0 0 320 320">
@@ -348,8 +348,6 @@
     <audio id="bg-music" loop crossorigin="anonymous" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
 
     <!-- --- LINK LOCAL WEBGL/MOTION CAPTURE scripts (with cache busters) --- -->
-    <script src="avatar_puppet.js?v=115"></script>
-    <script src="audio_video_recorder.js?v=115"></script>
     <script src="motion_capture.js?v=118"></script>
 
     <!-- --- FIGURINES DATABASE (Carousel Exhibit Database) --- -->
@@ -666,7 +664,7 @@
                 nextPlayer.ontimeupdate = null; // Clear old listeners
                 
                 // Mute status - standby loop must be muted for Chrome autoplay
-                if (src.includes("开头.mp4") || src.includes("0_standby.mp4")) {
+                if (src.includes("intro.mp4") || src.includes("0_standby.mp4")) {
                     nextPlayer.muted = true;
                 } else {
                     nextPlayer.muted = false;
@@ -1321,7 +1319,7 @@
                 rawText = result.rawText;
                 console.log("[AI Match] Fast VLM mapped color:", window.detectedColor, "raw:", rawText);
             } catch (e) {
-                console.error("[AI Match] VLM color classification failed, using fallback:", e);
+                console.log("[AI Match] Local VLM backend unreachable on static host, using color fallback ('白'):", e.message || e);
             }
 
             // Immediately wake up matched figurine and update UI card details
@@ -1352,7 +1350,7 @@
                     }
                 }
             } catch (e) {
-                console.error("[AI Blessing] Background blessing generation failed:", e);
+                console.log("[AI Blessing] Local AI backend unreachable on static host, using fallback blessing:", e.message || e);
             }
         }
 
