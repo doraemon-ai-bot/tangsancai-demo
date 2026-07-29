@@ -365,6 +365,7 @@
                 danceVideo: "video/red_dance.mp4",
                 firstSpinVideo: "video/red_to_big.mp4",
                 outroVideo: "final_vid/red1.mp4",
+                blessing: "鸿运当头",
                 tags: { color: "红" }
             },
             blue: {
@@ -379,6 +380,7 @@
                 danceVideo: "video/blue_dance.mp4",
                 firstSpinVideo: "video/blue_to_big.mp4",
                 outroVideo: "final_vid/blue1.mp4",
+                blessing: "福寿绵长",
                 tags: { color: "蓝" }
             },
             black: {
@@ -393,6 +395,7 @@
                 danceVideo: "video/black_dance.mp4",
                 firstSpinVideo: "video/black_to_big.mp4",
                 outroVideo: "final_vid/black1.mp4",
+                blessing: "万象更新",
                 tags: { color: "黑" }
             },
             white: {
@@ -407,6 +410,7 @@
                 danceVideo: "video/white_dance.mp4",
                 firstSpinVideo: "video/white_to_big.mp4",
                 outroVideo: "final_vid/white1.mp4",
+                blessing: "岁岁平安",
                 tags: { color: "白" }
             },
             gray: {
@@ -421,6 +425,7 @@
                 danceVideo: "video/gray_dance.mp4",
                 firstSpinVideo: "video/gray_to_big.mp4",
                 outroVideo: "final_vid/gray1.mp4",
+                blessing: "吉祥如意",
                 tags: { color: "灰" }
             }
         };
@@ -1132,10 +1137,15 @@
             const nameEl = document.getElementById('museumFigurineName');
             const descEl = document.getElementById('museumFigurineDesc');
             const thumbEl = document.getElementById('museumFigurineThumb');
+            const stickerText = document.getElementById('stickerBlessing');
             
             if (nameEl) nameEl.innerText = figurine.name;
             if (descEl) descEl.innerText = figurine.desc;
             if (thumbEl) thumbEl.src = figurine.image;
+            if (stickerText && figurine.blessing) {
+                stickerText.innerText = figurine.blessing;
+                window.aiBlessing = figurine.blessing;
+            }
 
             // Also update the target pose inside motion capture if available
             if (window.mocap) {
@@ -1334,95 +1344,6 @@
             
             const cleanDisplay = rawText.trim().replace(/[\r\n]+/g, ' ').substring(0, 40);
             updateTrackingBadge("success", `感应结果: ${window.detectedColor} ("${cleanDisplay}...")`);
-            
-            // Launch the rich blessing generation in the background (DOES NOT AWAIT!)
-            generateBackgroundBlessing(window.detectedColor, useLocalAI);
-        }
-
-        async function generateBackgroundBlessing(color, useLocalAI) {
-            console.log("[AI Blessing] Starting background blessing generator for color:", color);
-            try {
-                const blessing = await fetchBlessingFromAI(color, useLocalAI);
-                if (blessing && blessing.trim().length > 0) {
-                    const cleanedBlessing = blessing.trim().replace(/[^A-Za-z0-9\u4e00-\u9fa5]/g, '').substring(0, 8);
-                    console.log("[AI Blessing] Background blessing generation completed successfully:", cleanedBlessing);
-                    window.aiBlessing = cleanedBlessing;
-                    
-                    // Update Polaroid card text dynamically
-                    const stickerText = document.getElementById('stickerBlessing');
-                    if (stickerText) {
-                        stickerText.innerText = window.aiBlessing;
-                    }
-                }
-            } catch (e) {
-                console.log("[AI Blessing] Local AI backend unreachable on static host, using fallback blessing:", e.message || e);
-            }
-        }
-
-        async function fetchBlessingFromAI(color, useLocalAI) {
-            if (!useLocalAI) {
-                // Gemini Cloud path
-                const apiKey = document.getElementById('apiKey')?.value || '';
-                let url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-                if (apiKey) {
-                    url += `?key=${apiKey}`;
-                } else {
-                    url = '/api/gemini';
-                }
-                
-                const prompt = `Based on the Tang Sancai glaze color: ${color}, generate a beautiful 4-character classical Chinese blessing/phrase matching this color. Respond ONLY with the 4 characters, no other words.`;
-                
-                const payload = {
-                    contents: [{
-                        parts: [{ text: prompt }]
-                    }],
-                    generationConfig: { temperature: 0.7 }
-                };
-                
-                const response = await fetchWithTimeout(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }, 10000);
-                
-                if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-                const resJson = await response.json();
-                return resJson.candidates[0].content.parts[0].text.trim();
-            } else {
-                // Local Ollama Gemma path (Text only!)
-                const endpoint = document.getElementById('apiEndpoint')?.value || 'http://localhost:11434';
-                
-                // HTTPS Mixed Content Guard: Browser blocks http://localhost from https:// Pages
-                if (window.location.protocol === 'https:' && endpoint.startsWith('http:')) {
-                    console.log("[AI Blessing] HTTPS mixed content guard: local HTTP Ollama endpoint bypassed on static HTTPS host.");
-                    return "岁岁平安";
-                }
-                
-                const cleanEndpoint = endpoint.replace(/\/v1\/?$/, '').replace(/\/$/, '');
-                const url = `${cleanEndpoint}/v1/chat/completions`;
-                
-                const prompt = `Based on the Tang Sancai glaze color: ${color}, generate a beautiful 4-character classical Chinese blessing/phrase matching this color. Respond ONLY with the 4 characters, no JSON, no markdown, no other words.`;
-                
-                const payload = {
-                    model: "gemma4:e2b",
-                    messages: [{
-                        role: "user",
-                        content: prompt
-                    }],
-                    temperature: 0.7,
-                    max_tokens: 15
-                };
-                
-                const response = await fetchWithTimeout(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }, 10000);
-                
-                if (!response.ok) throw new Error(`Local Gemma error: ${response.status}`);
-                const resJson = await response.json();
-                return resJson.choices[0].message.content.trim();
-            }
         }
 
         function setAwakenButtonReady(ready, color = null) {
