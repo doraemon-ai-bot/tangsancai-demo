@@ -832,11 +832,21 @@
             console.log("[State Machine] Starting cinematic flow -> INTRO_REVEAL");
             currentState = AppState.INTRO_REVEAL;
             
-            // Keep muted for autoplay reliability in Chrome
+            // Immediately pause and hide standby intro video (intro.mp4)
             const playerA = document.getElementById('videoPlayerA');
             const playerB = document.getElementById('videoPlayerB');
-            if (playerA) playerA.muted = true;
-            if (playerB) playerB.muted = true;
+            if (playerA) { 
+                playerA.pause(); 
+                playerA.classList.remove('opacity-100'); 
+                playerA.classList.add('opacity-0'); 
+                playerA.style.opacity = '0'; 
+            }
+            if (playerB) { 
+                playerB.pause(); 
+                playerB.classList.remove('opacity-100'); 
+                playerB.classList.add('opacity-0'); 
+                playerB.style.opacity = '0'; 
+            }
             
             // Hide start overlay so it's not clickable anymore
             const startOverlay = document.getElementById('startOverlay');
