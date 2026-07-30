@@ -287,6 +287,7 @@
                     <div class="flex justify-between border-b border-white/10 pb-1.5 mb-1.5 shrink-0">
                         <span class="text-white font-semibold flex items-center gap-1">🔍 调试日志 (Debug Logs)</span>
                         <div class="flex gap-2">
+                            <button onclick="copyAllDebugLogs()" class="text-amber-400 hover:text-amber-300 font-bold transition-all duration-200">📋 复制</button>
                             <button onclick="document.getElementById('logConsoleLines').innerHTML = ''" class="text-warning hover:text-warning-focus">清空</button>
                             <button onclick="document.getElementById('onScreenLogger').classList.add('hidden')" class="text-red-400 hover:text-red-300">隐藏</button>
                         </div>
@@ -442,6 +443,38 @@
                     }
                 }
                 
+                window.copyAllDebugLogs = function() {
+                    if (!consoleDiv) return;
+                    const lines = Array.from(consoleDiv.children).map(el => el.innerText || el.textContent).join('\n');
+                    if (!lines) {
+                        showToast("暂无日志可复制", "warning");
+                        return;
+                    }
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(lines).then(() => {
+                            showToast("✅ 已复制全部调试日志到剪贴板！", "success");
+                        }).catch(() => fallbackCopyText(lines));
+                    } else {
+                        fallbackCopyText(lines);
+                    }
+                };
+                
+                function fallbackCopyText(text) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast("✅ 已复制全部调试日志到剪贴板！", "success");
+                    } catch (e) {
+                        showToast("❌ 复制失败，请手动选择文字复制", "error");
+                    }
+                    document.body.removeChild(textarea);
+                }
+
                 window.onerror = function(msg, url, line, col, error) {
                     addLogLine(`[🚨 Global Error] ${msg} (${url}:${line})`, 'text-red-500');
                     return false;
