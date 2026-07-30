@@ -212,7 +212,7 @@
                 
                 <!-- 2b. Pre-rendered Video Player Overlay (for awakening dance) -->
                 <!-- 2b. Pre-rendered Video Player Overlays (Double Buffer for Seamless Crossfading) -->
-                <video id="videoPlayerA" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" src="video/intro.mp4" muted autoplay loop playsinline></video>
+                <video id="videoPlayerA" class="absolute inset-0 w-full h-full object-contain z-20 opacity-100 transition-opacity duration-300 pointer-events-none" src="video/intro.mp4" muted autoplay loop playsinline></video>
                 <video id="videoPlayerB" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" muted autoplay loop playsinline></video>
                 
                 <!-- OVERLAY player for the Opening Curtain (mix-blend-mode: screen makes black transparent) -->
@@ -223,13 +223,13 @@
                 <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
                 <!-- Outro Random Blessing Overlay (State: OUTRO_VIDEO End) -->
-                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 bg-black/30 flex flex-col items-center justify-end pb-28 p-6 transition-opacity duration-700 opacity-0 pointer-events-none">
-                    <div class="border-2 border-[#d4af37]/70 bg-neutral-950/85 backdrop-blur-md rounded-3xl p-6 max-w-lg w-full text-center shadow-[0_15px_50px_rgba(0,0,0,0.9)] flex flex-col items-center space-y-3 transform scale-95 transition-all duration-700">
-                        <div class="text-[11px] font-classical text-[#d4af37] tracking-[0.3em] uppercase font-bold">盛唐·典藏吉祥定格</div>
-                        <div id="outroBlessingText" class="text-3xl font-classical font-black text-white tracking-[0.25em] py-3 border-y border-[#d4af37]/30 w-full text-center drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]">
+                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-end pb-8 p-4 transition-opacity duration-700 opacity-0 pointer-events-none">
+                    <div class="border-2 border-[#d4af37]/80 bg-neutral-950/90 backdrop-blur-md rounded-2xl px-6 py-4 max-w-md w-full text-center shadow-[0_15px_50px_rgba(0,0,0,0.95)] flex flex-col items-center space-y-2 transform scale-95 transition-all duration-700">
+                        <div class="text-[10px] font-classical text-[#d4af37] tracking-[0.3em] uppercase font-bold">盛唐·典藏吉祥定格</div>
+                        <div id="outroBlessingText" class="text-3xl font-classical font-black text-white tracking-[0.25em] py-2 border-y border-[#d4af37]/30 w-full text-center drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]">
                             一舞千年，余韵绕梁
                         </div>
-                        <div class="text-[9px] font-roman text-amber-100/70 tracking-widest">MUSEUM COMMEMORATIVE BLESSING</div>
+                        <div class="text-[8px] font-roman text-amber-100/60 tracking-widest uppercase">MUSEUM COMMEMORATIVE BLESSING</div>
                     </div>
                 </div>
                 
@@ -690,7 +690,14 @@
                 
                 console.log(`[Video Loading 🎥] Switching source -> ${src} (loop: ${loop}, blend: ${blendMode})`);
                 
-                nextPlayer.src = src;
+                // Force immediate visibility on nextPlayer
+                nextPlayer.classList.remove('opacity-0');
+                nextPlayer.classList.add('opacity-100');
+                nextPlayer.style.opacity = '1';
+                
+                if (!nextPlayer.src.endsWith(src)) {
+                    nextPlayer.src = src;
+                }
                 nextPlayer.loop = loop;
                 nextPlayer.style.mixBlendMode = blendMode;
                 nextPlayer.currentTime = 0;
