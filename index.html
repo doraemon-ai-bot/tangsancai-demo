@@ -223,13 +223,13 @@
                 <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
                 <!-- Outro Random Blessing Overlay (State: OUTRO_VIDEO End) -->
-                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 bg-neutral-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-8 transition-opacity duration-700 opacity-0 pointer-events-none">
-                    <div class="border-2 border-[#d4af37]/40 bg-[#161614]/90 rounded-3xl p-8 max-w-lg w-full text-center shadow-[0_0_60px_rgba(212,175,55,0.25)] flex flex-col items-center space-y-4 transform scale-95 transition-all duration-700">
-                        <div class="text-[10px] font-classical text-[#d4af37]/70 tracking-[0.3em] uppercase">盛唐·永福呈祥</div>
-                        <div id="outroBlessingText" class="text-2xl font-classical font-bold text-[#d4af37] tracking-[0.25em] py-4 border-y border-[#d4af37]/20 w-full text-center drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]">
+                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 bg-black/30 flex flex-col items-center justify-end pb-28 p-6 transition-opacity duration-700 opacity-0 pointer-events-none">
+                    <div class="border-2 border-[#d4af37]/70 bg-neutral-950/85 backdrop-blur-md rounded-3xl p-6 max-w-lg w-full text-center shadow-[0_15px_50px_rgba(0,0,0,0.9)] flex flex-col items-center space-y-3 transform scale-95 transition-all duration-700">
+                        <div class="text-[11px] font-classical text-[#d4af37] tracking-[0.3em] uppercase font-bold">盛唐·典藏吉祥定格</div>
+                        <div id="outroBlessingText" class="text-3xl font-classical font-black text-white tracking-[0.25em] py-3 border-y border-[#d4af37]/30 w-full text-center drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]">
                             一舞千年，余韵绕梁
                         </div>
-                        <div class="text-[9px] font-roman text-amber-100/50 tracking-widest">MUSEUM COMMEMORATIVE BLESSING</div>
+                        <div class="text-[9px] font-roman text-amber-100/70 tracking-widest">MUSEUM COMMEMORATIVE BLESSING</div>
                     </div>
                 </div>
                 
@@ -1357,12 +1357,12 @@
             window.matchedFigurineId = matchedFigurine.id;
             updateMuseumInfoCard(matchedFigurine);
             
-            // Immediately display 0s frame image for matched color under intro video
+            // Preload 0s frame image for matched color (Keep hidden until curtain reveal stage starts!)
             const stageImg = document.getElementById('stageFigurineImg');
             if (stageImg && matchedFigurine.reveal0sImage) {
                 stageImg.src = matchedFigurine.reveal0sImage;
-                stageImg.classList.remove('opacity-0');
-                stageImg.classList.add('opacity-100');
+                stageImg.classList.remove('opacity-100');
+                stageImg.classList.add('opacity-0');
             }
             
             const cleanDisplay = rawText.trim().replace(/[\r\n]+/g, ' ').substring(0, 40);
