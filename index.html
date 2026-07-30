@@ -584,6 +584,12 @@
         window.matchedFigurineId = 'optimal_1';
         window.aiBlessing = '岁岁平安，万事大吉';
 
+        // Call resetKiosk immediately when DOM is ready so video/intro.mp4 plays instantly without waiting for webcam
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("[Page Startup 🚀] Initializing kiosk standby video loop immediately...");
+            resetKiosk();
+        });
+
         window.addEventListener('load', async () => {
             const defaultHost = window.location.hostname || "localhost";
             const apiEndpointInput = document.getElementById('apiEndpoint');
@@ -599,6 +605,9 @@
                 console.error("AudioVideoRecorder init failed:", e);
             }
             
+            // Ensure resetKiosk is ready
+            resetKiosk();
+            
             try {
                 webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
                 webcamElement.srcObject = webcamStream;
@@ -610,7 +619,6 @@
                 if (warningHUD) warningHUD.classList.remove('hidden');
                 updateTrackingBadge("error", "未连接");
             }
-            resetKiosk();
             
             // Initialize description label with default figurine
             updateMuseumInfoCard(FIGURINES_DB['white']);
