@@ -638,12 +638,16 @@
             return new Promise((resolve, reject) => {
                 const playerA = document.getElementById('videoPlayerA');
                 const playerB = document.getElementById('videoPlayerB');
-                if (!playerA || !playerB) { resolve(); return; }
+                if (!playerA || !playerB) { 
+                    console.error("[Video System 🚨] Missing videoPlayerA or videoPlayerB elements!");
+                    resolve(); 
+                    return; 
+                }
                 
                 const nextPlayer = (activePlayer === playerA) ? playerB : playerA;
                 const prevPlayer = activePlayer;
                 
-                console.log(`[Video System] Switching source to: ${src}`);
+                console.log(`[Video Loading 🎥] Switching source -> ${src} (loop: ${loop}, blend: ${blendMode})`);
                 
                 nextPlayer.src = src;
                 nextPlayer.loop = loop;
@@ -659,7 +663,7 @@
                 }
                 
                 nextPlayer.onplaying = function() {
-                    console.log(`[Video System] Next player playing -> fading in`);
+                    console.log(`[Video Loading ✅] Video playing & fading in: ${src} (Player: ${nextPlayer.id})`);
                     nextPlayer.classList.remove('opacity-0');
                     nextPlayer.classList.add('opacity-100');
                     
@@ -689,6 +693,7 @@
                     nextPlayer.ontimeupdate = function() {
                         if (nextPlayer.duration > 1.0 && nextPlayer.currentTime > 1.0 && (nextPlayer.ended || nextPlayer.currentTime >= nextPlayer.duration - 0.08)) {
                             nextPlayer.ontimeupdate = null; // One-shot
+                            console.log(`[Video Loading 🏁] Video ended: ${src}`);
                             if (onendedCallback) onendedCallback();
                             resolve();
                         }
@@ -697,9 +702,10 @@
                 
                 activePlayer = nextPlayer;
                 nextPlayer.play().then(() => {
+                    console.log(`[Video Loading ▶️] Play promise resolved for: ${src}`);
                     if (loop) resolve(); // For looping videos, resolve immediately after play starts
                 }).catch(e => {
-                    console.warn(`[Video System] Play failed for ${src}:`, e);
+                    console.warn(`[Video Loading ⚠️] Play failed for ${src} (Autoplay policy?):`, e);
                     // If play fails (e.g. autoplay blocked), resolve anyway to avoid hanging the flow
                     resolve();
                 });
@@ -718,7 +724,10 @@
             if (startOverlay) {
                 startOverlay.classList.remove('opacity-0', 'pointer-events-none');
             }
-            document.getElementById('stickerGiftOverlay').classList.remove('show-sticker');
+            const stickerGift = document.getElementById('stickerGiftOverlay');
+            if (stickerGift) {
+                stickerGift.classList.remove('show-sticker');
+            }
             hideGuidancePrompt(); // Reset banner
             
             // Hide custom PNG prompts
