@@ -239,6 +239,28 @@ class MotionCaptureEngine {
     }
     
     /**
+     * Evaluates whether key landmarks indicate a real human is present in the frame
+     */
+    isHumanPresent(results) {
+        if (!results || !results.poseLandmarks || results.poseLandmarks.length < 29) {
+            return false;
+        }
+        const lm = results.poseLandmarks;
+        const keyIndices = [0, 11, 12, 23, 24]; // Nose, Left/Right Shoulder, Left/Right Hip
+        let totalVis = 0;
+        let count = 0;
+        for (let idx of keyIndices) {
+            if (lm[idx] && typeof lm[idx].visibility === 'number') {
+                totalVis += lm[idx].visibility;
+                count++;
+            }
+        }
+        if (count === 0) return true; // Fallback if visibility is not provided
+        const avgVis = totalVis / count;
+        return avgVis >= 0.55;
+    }
+
+    /**
      * Callback when MediaPipe Pose completes image analysis on a frame
      */
     onPoseResults(results) {
@@ -246,12 +268,12 @@ class MotionCaptureEngine {
             console.log("[Mocap Engine] ✅ First result RECEIVED from MediaPipe Pose!");
             this.firstResultReceived = true;
         }
-        
 
+        const humanPresent = this.isHumanPresent(results);
 
-        if (!results.poseLandmarks) {
+        if (!humanPresent) {
             if (!this.lastNoLandmarkLog || Date.now() - this.lastNoLandmarkLog > 2000) {
-                console.log("[Mocap Engine] No landmarks detected in frame. Waiting for person to enter frame...");
+                console.log("[Mocap Engine] No human detected in frame (landmarks missing or low visibility). Waiting for person to enter frame...");
                 this.lastNoLandmarkLog = Date.now();
             }
             if (typeof window.updateTrackingBadge === 'function') {
@@ -260,18 +282,16 @@ class MotionCaptureEngine {
             if (this.onPoseScore) this.onPoseScore(0); // reset score
             this.matchStartTime = null; // reset timer
             
-            // Handle user absence (leaving frame counts as stillness)
-            if (!this.isPoseTriggerMode) {
-                const now = Date.now();
-                if (!this.absenceStartTime) {
-                    this.absenceStartTime = now;
-                } else if (now - this.absenceStartTime > 1500) { // 1.5 seconds absence
-                    if (!this.isAbsent) {
-                        this.isAbsent = true;
-                        console.log("[Mocap Engine] User is ABSENT (no landmarks)");
-                        if (typeof window.onUserStill === 'function') {
-                            window.onUserStill(true); // User is absent
-                        }
+            // Handle user absence (leaving frame or low landmark confidence)
+            const now = Date.now();
+            if (!this.absenceStartTime) {
+                this.absenceStartTime = now;
+            } else if (now - this.absenceStartTime > 1000) { // 1.0 seconds absence
+                if (!this.isAbsent) {
+                    this.isAbsent = true;
+                    console.log("[Mocap Engine] User is ABSENT (no human detected)");
+                    if (typeof window.onUserStill === 'function') {
+                        window.onUserStill(true); // User is absent
                     }
                 }
             }
