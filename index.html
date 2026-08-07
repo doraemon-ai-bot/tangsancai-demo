@@ -507,15 +507,20 @@
                     return false;
                 };
                 
-                // Allow toggling debug console with "d" key
+                // Allow toggling debug console with "d" key & copying logs with "c" key
                 window.addEventListener('keydown', (e) => {
                     if (e.key === 'd' || e.key === 'D') {
                         const logger = document.getElementById('onScreenLogger');
                         if (logger) logger.classList.toggle('hidden');
                     }
+                    if (e.key === 'c' || e.key === 'C') {
+                        if (typeof window.copyAllDebugLogs === 'function') {
+                            window.copyAllDebugLogs();
+                        }
+                    }
                 });
                 
-                console.log("[Orchestrator] On-screen debugger successfully hooked to console channels. Press 'd' to toggle.");
+                console.log("[Orchestrator] On-screen debugger successfully hooked to console channels. Press 'd' to toggle, 'c' to copy all logs.");
             });
         })();
 
