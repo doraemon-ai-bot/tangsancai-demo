@@ -885,13 +885,13 @@
             // 等待拉帘 5 秒播放完成
             await curtainPromise;
             
-            // If VLM recognition is still finishing up, wait briefly (up to 4s) so we always get the true recognized color
+            // If VLM recognition is still finishing up, wait briefly (up to 8s) so we always get the true recognized color
             if (window.vlmPromise) {
                 console.log("[State Machine] Awaiting final VLM vision color result before reveal video...");
                 try {
                     await Promise.race([
                         window.vlmPromise,
-                        new Promise(r => setTimeout(r, 4000))
+                        new Promise(r => setTimeout(r, 8000))
                     ]);
                 } catch(e) {}
             }
