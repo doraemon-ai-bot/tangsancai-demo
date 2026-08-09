@@ -343,10 +343,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：举起左手",
                 reveal0sImage: "assets/images/reveal_red_0s.jpg",
-                revealVideo: "assets/videos/1_reveal_red.mp4",
+                revealVideo: "video/reveal_red.mp4",
                 danceVideo: "video/red_dance.mp4",
                 firstSpinVideo: "video/red_to_big.mp4",
-                outroVideo: "final_vid/red1.mp4",
+                outroVideo: "video/red_outro.mp4",
                 blessing: "鸿运当头",
                 tags: { color: "红" }
             },
@@ -359,10 +359,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：举起左手",
                 reveal0sImage: "assets/images/reveal_blue_0s.jpg",
-                revealVideo: "assets/videos/1_reveal_blue.mp4",
+                revealVideo: "video/reveal_blue.mp4",
                 danceVideo: "video/blue_dance.mp4",
                 firstSpinVideo: "video/blue_to_big.mp4",
-                outroVideo: "final_vid/blue1.mp4",
+                outroVideo: "video/blue_outro.mp4",
                 blessing: "福寿绵长",
                 tags: { color: "蓝" }
             },
@@ -375,10 +375,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：举起左手",
                 reveal0sImage: "assets/images/reveal_black_0s.jpg",
-                revealVideo: "assets/videos/1_reveal_black.mp4",
+                revealVideo: "video/reveal_black.mp4",
                 danceVideo: "video/black_dance.mp4",
                 firstSpinVideo: "video/black_to_big.mp4",
-                outroVideo: "final_vid/black1.mp4",
+                outroVideo: "video/black_outro.mp4",
                 blessing: "万象更新",
                 tags: { color: "黑" }
             },
@@ -391,10 +391,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：举起左手",
                 reveal0sImage: "assets/images/reveal_white_0s.jpg",
-                revealVideo: "assets/videos/1_reveal_white.mp4",
+                revealVideo: "video/reveal_white.mp4",
                 danceVideo: "video/white_dance.mp4",
                 firstSpinVideo: "video/white_to_big.mp4",
-                outroVideo: "final_vid/white1.mp4",
+                outroVideo: "video/white_outro.mp4",
                 blessing: "岁岁平安",
                 tags: { color: "白" }
             },
@@ -407,10 +407,10 @@
                 poseKey: "optimal_1",
                 poseLabel: "正在挑战：举起左手",
                 reveal0sImage: "assets/images/reveal_gray_0s.jpg",
-                revealVideo: "assets/videos/1_reveal_gray.mp4",
+                revealVideo: "video/reveal_gray.mp4",
                 danceVideo: "video/gray_dance.mp4",
                 firstSpinVideo: "video/gray_to_big.mp4",
-                outroVideo: "final_vid/gray1.mp4",
+                outroVideo: "video/gray_outro.mp4",
                 blessing: "吉祥如意",
                 tags: { color: "灰" }
             }
@@ -1111,16 +1111,24 @@
             currentState = AppState.SPIN_LOOPING;
             
             const matchedId = window.matchedFigurineId || 'white';
-            const figurine = FIGURINES_DB[matchedId];
             
+            // 5-step continuous material transition loop:
+            // 0: {color}_to_big -> 1: big_flower_to_round -> 2: round_to_blue_flower -> 3: blue_flower_to_stripe -> 4: stripe_to_{color} -> loop!
+            const step = spinVideoIndex % 5;
             let spinVideoSrc = "";
-            if (spinVideoIndex === 0) {
-                spinVideoSrc = figurine ? figurine.firstSpinVideo : "video/white_to_big.mp4";
-            } else {
-                spinVideoSrc = SPIN_LOOP_VIDEOS[(spinVideoIndex - 1) % SPIN_LOOP_VIDEOS.length];
+            if (step === 0) {
+                spinVideoSrc = `video/${matchedId}_to_big.mp4`;
+            } else if (step === 1) {
+                spinVideoSrc = "video/big_flower_to_round.mp4";
+            } else if (step === 2) {
+                spinVideoSrc = "video/round_to_blue_flower.mp4";
+            } else if (step === 3) {
+                spinVideoSrc = "video/blue_flower_to_stripe.mp4";
+            } else if (step === 4) {
+                spinVideoSrc = `video/stripe_to_${matchedId}.mp4`;
             }
             
-            console.log(`[State Machine] Playing spin transition video: ${spinVideoSrc}`);
+            console.log(`[State Machine] Playing spin transition video (Step ${step + 1}/5): ${spinVideoSrc}`);
             
             // Fade out the prompt temporarily while the video plays
             const promptMat = document.getElementById('promptMaterialImg');
