@@ -982,13 +982,6 @@
 
 
             // ================= INTERACTIVE DETECTOR CALLBACKS =================
-
-            window.onUserCurtainPull = function() {
-                console.log("[State Machine] onUserCurtainPull triggered!");
-                if (currentState === AppState.STANDBY_LOOP) {
-                    startCinematicFlow();
-                }
-            };
             // --- MANUAL BYPASS FOR TESTING ---
             document.addEventListener('click', (e) => {
                 // Ignore clicks on buttons/controls

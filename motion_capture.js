@@ -32,10 +32,6 @@ class MotionCaptureEngine {
         this.maxShoulderWidth = 0.15; // Rolling self-calibrating maximum
         this.baseOrder = null;        // Baseline left-to-right shoulder order
         
-        // --- NEW: Curtain Pull gesture states ---
-        this.smoothedCurtainRatio = 1.0; // Smoothed hands horizontal distance ratio
-        this.curtainPullTimer = 0;
-        
         this.prevLandmarks = {};      // For velocity/displacement tracking
         this.movementIntensity = 0.5; // Smooth rolling movement velocity
         this.stillStartTime = null;   // Timer for stillness
@@ -801,37 +797,6 @@ class MotionCaptureEngine {
                             }
                         }
                     }
-                }
-            }
-        }
-
-        // ================= 3. HANDS TOGETHER (CURTAIN PULL) DETECTION =================
-        if (pL && pR && lm[15] && lm[16]) {
-            const pWristL = lm[15];
-            const pWristR = lm[16];
-            
-            const shoulderDist = Math.abs(pL.x - pR.x);
-            const wristDist = Math.abs(pWristL.x - pWristR.x);
-            const ratio = wristDist / (shoulderDist || 0.1);
-            
-            // Smooth the ratio to filter out camera tracking noise/jitter
-            this.smoothedCurtainRatio = this.smoothedCurtainRatio * 0.82 + ratio * 0.18;
-            
-            // Wrists must be above hip line (dynamic threshold matching screen & metric coords)
-            const hipY = (lm[23] && lm[24]) ? (lm[23].y + lm[24].y) / 2 : 0.65;
-            const handsRaised = pWristL.y < hipY && pWristR.y < hipY;
-            
-            if (!window.debugCurtainCounter) window.debugCurtainCounter = 0;
-            window.debugCurtainCounter++;
-            if (window.debugCurtainCounter % 30 === 0) {
-                console.log(`[Curtain Pull Debug] rawRatio: ${ratio.toFixed(2)}, smoothedRatio: ${this.smoothedCurtainRatio.toFixed(2)} (threshold: 0.55), handsRaised: ${handsRaised}`);
-            }
-
-            if (handsRaised && this.smoothedCurtainRatio < 0.55) {
-                this.smoothedCurtainRatio = 1.5; // Reset to higher value to prevent repeat triggers
-                console.log("[Mocap Engine] HANDS TOGETHER (CURTAIN PULL) DETECTED via smoothed threshold!");
-                if (typeof window.onUserCurtainPull === 'function') {
-                    window.onUserCurtainPull();
                 }
             }
         }
