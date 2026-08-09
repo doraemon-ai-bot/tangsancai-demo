@@ -885,6 +885,17 @@
             // 等待拉帘 5 秒播放完成
             await curtainPromise;
             
+            // If VLM recognition is still finishing up, wait briefly (up to 4s) so we always get the true recognized color
+            if (window.vlmPromise) {
+                console.log("[State Machine] Awaiting final VLM vision color result before reveal video...");
+                try {
+                    await Promise.race([
+                        window.vlmPromise,
+                        new Promise(r => setTimeout(r, 4000))
+                    ]);
+                } catch(e) {}
+            }
+            
             // --- 阶段 2b: 独立出场视频环节 (实时获取最新的 VLM 识别颜色结果) ---
             const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
             const finalFigurine = FIGURINES_DB[finalMatchedId] || FIGURINES_DB['white'];
@@ -1429,7 +1440,8 @@
                 const useLocalAI = document.getElementById('useLocalAI')?.checked ?? true;
                 
                 // Call fast VLM color classification
-                const result = await classifyColorWithVLM(base64Image, useLocalAI);
+                window.vlmPromise = classifyColorWithVLM(base64Image, useLocalAI);
+                const result = await window.vlmPromise;
                 window.detectedColor = result.mappedColor;
                 rawText = result.rawText || "识别完成";
                 console.log("[AI Match] Fast VLM mapped color:", window.detectedColor, "raw:", rawText);
@@ -1437,6 +1449,7 @@
                 console.log("[AI Match] Local VLM backend unreachable on static host, using color fallback ('白'):", e.message || e);
             } finally {
                 window.isVlmMatching = false;
+                window.vlmPromise = null;
             }
 
             // Immediately wake up matched figurine and update UI card details
