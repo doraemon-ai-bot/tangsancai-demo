@@ -1385,16 +1385,16 @@
                     stream: false,
                     options: {
                         temperature: 0.1,
-                        num_predict: 20
+                        num_predict: 180
                     }
                 };
                 
-                console.log(`[Color Classifier 🦙] Sending vision classification request to ${modelName} (fast max 20 tokens)...`);
+                console.log(`[Color Classifier 🦙] Sending vision classification request to ${modelName}...`);
                 const response = await fetchWithTimeout(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }, 15000);
+                }, 25000);
                 
                 if (!response.ok) throw new Error(`Local VLM error: ${response.status} (Model: ${modelName})`);
                 const resJson = await response.json();
@@ -1412,6 +1412,11 @@
             window.isVlmMatching = true;
             console.log("[AI Match] Triggering fast VLM color classification...");
             
+            // Set safety defaults
+            window.detectedColor = "白";
+            window.aiBlessing = "岁岁平安，万事大吉";
+            let rawText = "未知";
+            
             try {
                 const hiddenCanvas = document.createElement('canvas');
                 hiddenCanvas.width = 320;
@@ -1423,15 +1428,10 @@
                 const base64Image = hiddenCanvas.toDataURL('image/jpeg').split(',')[1];
                 const useLocalAI = document.getElementById('useLocalAI')?.checked ?? true;
                 
-                // Set safety defaults
-                window.detectedColor = "白";
-                window.aiBlessing = "岁岁平安，万事大吉";
-                let rawText = "未知";
-                
                 // Call fast VLM color classification
                 const result = await classifyColorWithVLM(base64Image, useLocalAI);
                 window.detectedColor = result.mappedColor;
-                rawText = result.rawText;
+                rawText = result.rawText || "识别完成";
                 console.log("[AI Match] Fast VLM mapped color:", window.detectedColor, "raw:", rawText);
             } catch (e) {
                 console.log("[AI Match] Local VLM backend unreachable on static host, using color fallback ('白'):", e.message || e);
