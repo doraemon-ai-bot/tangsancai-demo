@@ -524,8 +524,6 @@
             });
         })();
 
-        let avatar = null;
-        let recorder = null;
         let mocap = null;
         let webcamElement = document.getElementById('webcam');
         let bgMusicElement = document.getElementById('bg-music');
@@ -632,16 +630,6 @@
             const defaultHost = window.location.hostname || "localhost";
             const apiEndpointInput = document.getElementById('apiEndpoint');
             if (apiEndpointInput) apiEndpointInput.value = `http://${defaultHost}:11434/v1`;
-            
-            try {
-                avatar = new AvatarEngine("threejs-canvas");
-            } catch (e) { console.error("Avatar Engine init failed:", e); }
-            
-            try {
-                recorder = new AudioVideoRecorder(document.getElementById("threejs-canvas"), bgMusicElement);
-            } catch (e) {
-                console.error("AudioVideoRecorder init failed:", e);
-            }
             
             // Ensure resetKiosk is ready
             resetKiosk();
@@ -1531,7 +1519,7 @@
                 });
             }
             
-            mocap = new MotionCaptureEngine(webcamElement, avatar);
+            mocap = new MotionCaptureEngine(webcamElement);
             initializeMocapCallbacks();
             mocap.start();
         }

@@ -332,7 +332,6 @@ class MotionCaptureEngine {
             if (typeof window.updateTrackingBadge === 'function') {
                 window.updateTrackingBadge("success", "正在实时动捕中...");
             }
-            this.retargetSkeletalBones(landmarks);
         }
         
         // Track interactive gestures (spins, stillness) in real-time on every frame
@@ -435,13 +434,7 @@ class MotionCaptureEngine {
      * Helper to rotate a specific joint node in Three.js using a Quaternion
      */
     rotateJoint(jointName, quaternion) {
-        if (!this.avatar || !this.avatar.joints) {
-            if (!this.hasLoggedJointError) {
-                console.warn("[Mocap Engine] rotateJoint skipped: Avatar or joints map is missing/undefined!", this.avatar);
-                this.hasLoggedJointError = true;
-            }
-            return;
-        }
+        if (!this.avatar || !this.avatar.joints) return;
         const boneGroup = this.avatar.joints[jointName];
         if (boneGroup) {
             // Interpolate smoothly (Slerp) to reduce jitter from tracking noise
