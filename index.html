@@ -897,8 +897,10 @@
             // 等待拉帘 5 秒播放完成
             await curtainPromise;
             
-            // --- 阶段 2b: 独立出场视频环节 (纯播放 1_reveal_{color}.mp4，无 curtain overlay!) ---
-            console.log(`[State Machine] Curtain finished -> Playing reveal video (clean): ${figurine.revealVideo}`);
+            // --- 阶段 2b: 独立出场视频环节 (实时获取最新的 VLM 识别颜色结果) ---
+            const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
+            const finalFigurine = FIGURINES_DB[finalMatchedId] || FIGURINES_DB['white'];
+            console.log(`[State Machine] Curtain finished -> Playing reveal video (clean): ${finalFigurine.revealVideo} (Color: ${finalFigurine.tags?.color || '白'})`);
             
             // 隐藏下层静态 0秒首帧图片，展示纯视频播放
             if (stageImg) {
@@ -920,13 +922,13 @@
                 
                 if (mocap) {
                     mocap.isPoseTriggerMode = true; // Enable pose match challenge!
-                    mocap.activePoseKey = figurine ? figurine.poseKey : 'optimal_1';
+                    mocap.activePoseKey = finalFigurine ? finalFigurine.poseKey : 'optimal_1';
                     mocap.matchStartTime = null;
                 }
             };
             
             try {
-                await playSeamlessVideo(figurine.revealVideo, false, 'normal', showPromptCallback);
+                await playSeamlessVideo(finalFigurine.revealVideo, false, 'normal', showPromptCallback);
             } catch (e) {
                 console.error("[State Machine] Play reveal video failed:", e);
             }
