@@ -1359,7 +1359,7 @@
                 console.log("[Color Classifier] Gemini Cloud output:", text);
                 return { mappedColor: mapDescriptionToColor(text), rawText: text };
             } else {
-                // Local Ollama Moondream path (Native endpoint!)
+                // Local Ollama path (supports gemma4, moondream, etc.)
                 const endpoint = document.getElementById('apiEndpoint')?.value || 'http://localhost:11434';
                 
                 // HTTPS Mixed Content Guard: Browser blocks http://localhost from https:// Pages
@@ -1369,12 +1369,27 @@
                 }
                 
                 const cleanEndpoint = endpoint.replace(/\/v1\/?$/, '').replace(/\/$/, '');
-                const url = `${cleanEndpoint}/api/generate`;
                 
-                const prompt = "Describe the clothing of the person in this image.";
+                // 1. Dynamically find available model from Ollama /api/tags
+                let modelName = "gemma4:e2b";
+                try {
+                    const tagsRes = await fetchWithTimeout(`${cleanEndpoint}/api/tags`, { method: 'GET' }, 3000);
+                    if (tagsRes.ok) {
+                        const tagsJson = await tagsRes.json();
+                        if (tagsJson.models && tagsJson.models.length > 0) {
+                            modelName = tagsJson.models[0].name || tagsJson.models[0].model || "gemma4:e2b";
+                            console.log(`[Color Classifier 🦙] Detected active Ollama model: "${modelName}"`);
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`[Color Classifier 🦙] Auto-detect model failed, using default: "${modelName}"`, e);
+                }
+                
+                const url = `${cleanEndpoint}/api/generate`;
+                const prompt = "Describe the clothing of the person in this image. What is the dominant color of the shirt or top?";
                 
                 const payload = {
-                    model: "moondream:latest",
+                    model: modelName,
                     prompt: prompt,
                     images: [base64Image],
                     stream: false,
@@ -1383,16 +1398,17 @@
                     }
                 };
                 
+                console.log(`[Color Classifier 🦙] Sending vision classification request to ${modelName}...`);
                 const response = await fetchWithTimeout(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }, 15000);
+                }, 20000);
                 
-                if (!response.ok) throw new Error(`Local VLM error: ${response.status}`);
+                if (!response.ok) throw new Error(`Local VLM error: ${response.status} (Model: ${modelName})`);
                 const resJson = await response.json();
-                const text = resJson.response;
-                console.log("[Color Classifier] Native Moondream output:", text);
+                const text = resJson.response || "";
+                console.log(`[Color Classifier 🦙] Output from ${modelName}:`, text);
                 return { mappedColor: mapDescriptionToColor(text), rawText: text };
             }
         }
