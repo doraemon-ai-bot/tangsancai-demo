@@ -1388,7 +1388,7 @@
                 }
                 
                 const url = `${cleanEndpoint}/api/generate`;
-                const prompt = "Describe the clothing of the person in this image. What is the dominant color of the shirt or top?";
+                const prompt = "Look at the clothing of the person in this image. What is the dominant color of their shirt or top? Answer with one color name (Red, Blue, Black, White, or Gray):";
                 
                 const payload = {
                     model: modelName,
@@ -1396,16 +1396,17 @@
                     images: [base64Image],
                     stream: false,
                     options: {
-                        temperature: 0.1
+                        temperature: 0.1,
+                        num_predict: 20
                     }
                 };
                 
-                console.log(`[Color Classifier 🦙] Sending vision classification request to ${modelName}...`);
+                console.log(`[Color Classifier 🦙] Sending vision classification request to ${modelName} (fast max 20 tokens)...`);
                 const response = await fetchWithTimeout(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }, 20000);
+                }, 15000);
                 
                 if (!response.ok) throw new Error(`Local VLM error: ${response.status} (Model: ${modelName})`);
                 const resJson = await response.json();
@@ -1416,30 +1417,38 @@
         }
 
         async function triggerSilentBackgroundMatch() {
+            if (window.isVlmMatching) {
+                console.log("[AI Match] VLM classification already in progress, skipping duplicate call.");
+                return;
+            }
+            window.isVlmMatching = true;
             console.log("[AI Match] Triggering fast VLM color classification...");
-            const hiddenCanvas = document.createElement('canvas');
-            hiddenCanvas.width = 320;
-            hiddenCanvas.height = 240;
-            const ctx = hiddenCanvas.getContext('2d');
-            ctx.translate(hiddenCanvas.width, 0);
-            ctx.scale(-1, 1);
-            ctx.drawImage(webcamElement, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
-            const base64Image = hiddenCanvas.toDataURL('image/jpeg').split(',')[1];
-            const useLocalAI = document.getElementById('useLocalAI')?.checked ?? true;
-            
-            // Set safety defaults
-            window.detectedColor = "白";
-            window.aiBlessing = "岁岁平安，万事大吉";
-            let rawText = "未知";
             
             try {
-                // Call fast VLM color classification (blocks UI for ~3-4s on local Moondream)
+                const hiddenCanvas = document.createElement('canvas');
+                hiddenCanvas.width = 320;
+                hiddenCanvas.height = 240;
+                const ctx = hiddenCanvas.getContext('2d');
+                ctx.translate(hiddenCanvas.width, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(webcamElement, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+                const base64Image = hiddenCanvas.toDataURL('image/jpeg').split(',')[1];
+                const useLocalAI = document.getElementById('useLocalAI')?.checked ?? true;
+                
+                // Set safety defaults
+                window.detectedColor = "白";
+                window.aiBlessing = "岁岁平安，万事大吉";
+                let rawText = "未知";
+                
+                // Call fast VLM color classification
                 const result = await classifyColorWithVLM(base64Image, useLocalAI);
                 window.detectedColor = result.mappedColor;
                 rawText = result.rawText;
                 console.log("[AI Match] Fast VLM mapped color:", window.detectedColor, "raw:", rawText);
             } catch (e) {
                 console.log("[AI Match] Local VLM backend unreachable on static host, using color fallback ('白'):", e.message || e);
+            } finally {
+                window.isVlmMatching = false;
             }
 
             // Immediately wake up matched figurine and update UI card details
