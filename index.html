@@ -722,6 +722,14 @@
                         stageImg.classList.add('opacity-0');
                         stageImg.style.opacity = '0';
                     }
+
+                    // Smoothly fade out curtain overlay (e.g. after curtain_close completes)
+                    const curtainOverlay = document.getElementById('curtainOverlayPlayer');
+                    if (curtainOverlay && curtainOverlay.style.opacity === '1' && !src.includes('curtain.mp4')) {
+                        curtainOverlay.style.transition = 'opacity 500ms ease-in-out';
+                        curtainOverlay.style.opacity = '0';
+                        setTimeout(() => { try { curtainOverlay.pause(); } catch(e){} }, 500);
+                    }
                     
                     // Only hide previous player AFTER next player has rendered active frames!
                     if (prevPlayer && prevPlayer !== nextPlayer) {
@@ -1103,10 +1111,10 @@
                         resolve();
                     });
                 });
-            } finally {
-                curtainOverlay.style.opacity = '0';
-                curtainOverlay.pause();
+            } catch(e) {
+                console.warn("curtain close error:", e);
             }
+            // Maintain curtainOverlay at opacity: 1 holding solid blue curtain until intro.mp4 starts rendering!
         }
 
         // ================= DYNAMIC GOLD DUST SPARKS & EMBERS CANVAS =================
