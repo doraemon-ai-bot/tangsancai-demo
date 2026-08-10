@@ -220,30 +220,30 @@
                 <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_dance.png" alt="提示跳舞" />
                 <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
-                <!-- Outro Magical Imperial Golden Blessing (State: OUTRO_VIDEO End) -->
-                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-end pb-14 pointer-events-none transition-opacity duration-1000 opacity-0">
-                    <!-- Particle Canvas for Rising Palace Embers & Gold Dust -->
+                <!-- Outro Pure White Center Blessing (State: OUTRO_VIDEO End) -->
+                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-1000 opacity-0">
+                    <!-- Particle Canvas for Gentle White/Silver Rising Stars & Dust -->
                     <canvas id="blessingSparksCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
                     
-                    <!-- Exquisite Floating Gold Scroll Card -->
-                    <div class="relative z-10 flex items-center justify-center gap-4 md:gap-6 px-8 md:px-14 py-4 md:py-5 rounded-2xl" 
-                         style="background: radial-gradient(ellipse at center, rgba(20, 14, 8, 0.95) 0%, rgba(8, 5, 2, 0.90) 70%, rgba(0,0,0,0.65) 100%);
-                                border: 1.5px solid rgba(230, 185, 55, 0.65);
-                                box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 35px rgba(212, 175, 55, 0.35), inset 0 0 20px rgba(212, 175, 55, 0.15);
-                                backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
+                    <!-- Exquisite Floating Dark Silk Card for Pure White Text -->
+                    <div class="relative z-10 flex items-center justify-center gap-4 md:gap-8 px-10 md:px-18 py-5 md:py-7 rounded-3xl" 
+                         style="background: radial-gradient(ellipse at center, rgba(12, 12, 15, 0.94) 0%, rgba(6, 6, 8, 0.88) 70%, rgba(0,0,0,0.65) 100%);
+                                border: 1.5px solid rgba(255, 255, 255, 0.40);
+                                box-shadow: 0 20px 60px rgba(0,0,0,0.95), 0 0 45px rgba(255, 255, 255, 0.25), inset 0 0 25px rgba(255, 255, 255, 0.12);
+                                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
                         
-                        <!-- Left Tang Cloud Filigree Ornament -->
-                        <svg class="w-8 h-8 md:w-10 md:h-10 text-amber-400/90 filter drop-shadow-[0_0_8px_rgba(245,185,55,0.8)]" viewBox="0 0 100 100" fill="currentColor">
+                        <!-- Left Tang Silver Cloud Ornament -->
+                        <svg class="w-8 h-8 md:w-12 md:h-12 text-white/90 filter drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]" viewBox="0 0 100 100" fill="currentColor">
                             <path d="M90 50 C90 35, 75 25, 60 30 C50 15, 25 20, 20 40 C10 42, 5 55, 15 65 C25 75, 45 70, 50 60 C55 70, 75 75, 85 65 C95 55, 90 50, 90 50 Z M45 52 C40 58, 30 58, 25 52 C20 45, 25 35, 35 38 C42 40, 45 46, 45 52 Z"/>
                         </svg>
                         
-                        <!-- Main Shimmering Golden Calligraphy Text -->
-                        <span id="outroBlessingText" class="font-calligraphy text-3xl md:text-5xl font-bold tracking-[0.3em] text-[#fff8db] drop-shadow-[0_0_30px_rgba(245,185,55,0.95),0_2px_8px_rgba(0,0,0,0.98)] whitespace-nowrap select-none">
-                            一舞千年 · 余韵绕梁
+                        <!-- Main Pure White Calligraphy Text (Centered) -->
+                        <span id="outroBlessingText" class="font-calligraphy text-4xl md:text-6xl font-bold tracking-[0.3em] text-white drop-shadow-[0_0_35px_rgba(255,255,255,0.95),0_0_70px_rgba(255,255,255,0.7),0_2px_12px_rgba(0,0,0,0.98)] whitespace-nowrap select-none">
+                            舞动千年 · 华彩乐章
                         </span>
                         
-                        <!-- Right Tang Cloud Filigree Ornament (Mirrored) -->
-                        <svg class="w-8 h-8 md:w-10 md:h-10 text-amber-400/90 filter drop-shadow-[0_0_8px_rgba(245,185,55,0.8)] transform scale-x-[-1]" viewBox="0 0 100 100" fill="currentColor">
+                        <!-- Right Tang Silver Cloud Ornament (Mirrored) -->
+                        <svg class="w-8 h-8 md:w-12 md:h-12 text-white/90 filter drop-shadow-[0_0_12px_rgba(255,255,255,0.9)] transform scale-x-[-1]" viewBox="0 0 100 100" fill="currentColor">
                             <path d="M90 50 C90 35, 75 25, 60 30 C50 15, 25 20, 20 40 C10 42, 5 55, 15 65 C25 75, 45 70, 50 60 C55 70, 75 75, 85 65 C95 55, 90 50, 90 50 Z M45 52 C40 58, 30 58, 25 52 C20 45, 25 35, 35 38 C42 40, 45 46, 45 52 Z"/>
                         </svg>
                     </div>
@@ -335,18 +335,18 @@
         // 🏺 大唐时空幻影镜——展项资产数据库 (Single Figurine Database)
         const SPIN_LOOP_VIDEOS = ['video/big_flower_to_round.mp4', 'video/round_to_blue_flower.mp4', 'video/blue_flower_to_stripe.mp4'];
         
-        // 📜 50 盛唐典雅祝福语典库 (1/50 随机抽取)
-        const BLESSINGS_50 = [
-            "霓裳焕彩，仪态万方", "锦衣华服，风华绝代", "云鬓花颜，顾盼生辉", "罗衣翩然，容止端丽", "珠翠生光，眉目如画",
-            "素衣胜雪，清雅出尘", "朱衣灼灼，艳冠群芳", "青衫磊落，风骨不凡", "黛眉远岫，绿鬓堆烟", "衣冠胜唐，气韵东方",
-            "弦鼓声动，旋身入唐", "左旋右转，回雪飘飘", "千匝万周，意犹未尽", "足踏圆毯，袖拂流云", "翩若惊鸿，婉若游龙",
-            "与俑共舞，梦回盛唐", "衣袂飞扬，神采奕奕", "一舞千年，余韵绕梁", "刚柔并济，行云流水", "旋若疾风，止若静湖",
-            "千年邂逅，今宵共舞", "俑前相遇，舞中相知", "盛世重逢，恰逢其时", "一眼千年，共此良辰", "穿越时空，与君同乐",
-            "萍水相逢，舞动情缘", "彼时唐俑，今夕知音", "千载难逢，舞梦成真", "人俑相映，古今交融", "有缘相逢，共舞长风",
-            "长乐未央，永受嘉福", "万事胜意，皆得所愿", "平安喜乐，顺遂无忧", "吉庆有余，福泽绵长", "祥瑞满堂，福慧双修",
-            "如意安康，岁岁欢愉", "嘉祥骈至，福寿安康", "百事从欢，万事随心", "鸿运当头，锦绣前程", "福星高照，喜乐长安",
-            "盛世重光，大唐气象", "万里山河，共耀华章", "丝路驼铃，梦回长安", "昭昭有唐，天俾万国", "千秋文明，薪火相传",
-            "东方既白，永续辉煌", "海纳百川，有容乃大", "物华天宝，人杰地灵", "开放包容，盛世之风", "富贵长安，万世流芳"
+        // 📜 38 盛唐唐风锦绣祝福语库 (随机抽选)
+        const BLESSINGS_CUSTOM = [
+            "舞动千年，华彩乐章", "霓裳映彩，乐舞生辉", "一舞千年，绮梦流芳", "彩袖轻扬，盛世安康",
+            "胡旋入梦，雅韵长存", "唐风起舞，福瑞盈门", "云裳流彩，步步生花", "乐舞东方，锦绣华章",
+            "唐韵流芳，彩梦成章", "乐起长安，舞映芳华", "霓彩飞扬，福满今朝", "胡旋共舞，喜乐未央",
+            "绮彩流转，雅意绵长", "舞影千年，福泽绵延", "彩衣迎风，祥瑞相随", "华彩相逢，乐舞同心",
+            "旋舞星河，福运相随", "千年共舞，芳华永驻", "霓裳绽彩，心愿花开", "胡旋踏歌，吉祥相伴",
+            "唐韵新生，三彩绽放", "一袭彩衣，满载欢喜", "舞启华年，福满人间", "舞随心动，彩随缘生",
+            "千载风雅，今日相逢", "乐舞胡旋，锦色流年", "彩映唐韵，福伴此行", "旋舞之间，美好相连",
+            "三彩入袖，雅韵随心", "一舞倾心，万彩同行", "胡旋飞舞，愿景成真", "彩虹入梦，唐韵相随",
+            "舞动芳华，福启新章", "唐韵流转，幸福相伴", "旋转生花，好运相随", "霓裳幻彩，欢愉常在",
+            "千年乐舞，与你相约", "风起霓裳，福至心间"
         ];
 
         const FIGURINES_DB = {
@@ -973,17 +973,15 @@
             const outroVid = figurine ? figurine.outroVideo : "video/white_outro.mp4";
             
             console.log(`[State Machine] Playing outro video: ${outroVid}`);
-            try {
-                await playSeamlessVideo(outroVid, false, 'normal');
-            } catch (e) {
-                console.error("[State Machine] Play failed:", e);
-            }
             
-            // Pick a 1/50 random blessing at the end of the outro video
-            const randomBlessing = BLESSINGS_50[Math.floor(Math.random() * BLESSINGS_50.length)];
-            console.log(`[State Machine] Outro video ended -> Random 1/50 Blessing: "${randomBlessing}"`);
+            // Pick a random blessing from the 38 custom Tang blessings
+            const randomBlessing = BLESSINGS_CUSTOM[Math.floor(Math.random() * BLESSINGS_CUSTOM.length)];
+            console.log(`[State Machine] Outro video started -> Random 1/38 Tang Blessing: "${randomBlessing}"`);
             
-            // Display refined bottom blessing banner with dynamic gold dust sparks
+            // Start playing the main outro video
+            const outroPromise = playSeamlessVideo(outroVid, false, 'normal');
+            
+            // Display pure white centered blessing text overlay with silver particle sparks
             const blessingOverlay = document.getElementById('outroBlessingOverlay');
             const blessingText = document.getElementById('outroBlessingText');
             
@@ -994,19 +992,69 @@
                 startBlessingSparks();
                 blessingOverlay.classList.remove('opacity-0');
                 blessingOverlay.classList.add('opacity-100');
-                
-                // Display blessing for 5.0 seconds
-                await new Promise(r => setTimeout(r, 5000));
-                
+            }
+            
+            // Wait for outro video to complete
+            try {
+                await outroPromise;
+            } catch (e) {
+                console.error("[State Machine] Play outro failed:", e);
+            }
+            
+            // --- 最后的谢幕环节：在祝福语上叠加倒放窗帘视频，实现幕布合拢 ---
+            console.log("[State Machine] Outro video ended -> Closing blue curtain over stage...");
+            await closeCurtainOverlay(3800); // 3.8s smooth curtain closing
+            
+            if (blessingOverlay) {
                 blessingOverlay.classList.remove('opacity-100');
                 blessingOverlay.classList.add('opacity-0');
-                await new Promise(r => setTimeout(r, 600));
                 stopBlessingSparks();
                 blessingOverlay.classList.add('hidden');
             }
             
-            console.log("[State Machine] Outro video ended -> returning to STANDBY_LOOP");
+            console.log("[State Machine] Curtain completely closed -> returning to STANDBY_LOOP");
             resetKiosk();
+        }
+
+        /**
+         * Plays curtain.mp4 in reverse to close the curtain over the stage
+         */
+        async function closeCurtainOverlay(durationMs = 3800) {
+            const curtainOverlay = document.getElementById('curtainOverlayPlayer');
+            if (!curtainOverlay) return;
+            
+            curtainOverlay.src = "video/curtain.mp4?v=20260810_close";
+            curtainOverlay.style.zIndex = '30';
+            curtainOverlay.classList.remove('hidden');
+            curtainOverlay.style.mixBlendMode = 'screen';
+            curtainOverlay.style.opacity = '1';
+            
+            await new Promise((resolve) => {
+                if (curtainOverlay.readyState >= 1) resolve();
+                else curtainOverlay.onloadedmetadata = resolve;
+            });
+            
+            const startVidTime = Math.min(3.8, curtainOverlay.duration || 3.8);
+            const startTime = performance.now();
+            
+            return new Promise((resolve) => {
+                function step(now) {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(1.0, elapsed / durationMs);
+                    const targetTime = startVidTime * (1.0 - progress);
+                    try {
+                        curtainOverlay.currentTime = Math.max(0, targetTime);
+                    } catch(e) {}
+                    
+                    if (progress < 1.0) {
+                        requestAnimationFrame(step);
+                    } else {
+                        curtainOverlay.currentTime = 0;
+                        resolve();
+                    }
+                }
+                requestAnimationFrame(step);
+            });
         }
 
         // ================= DYNAMIC GOLD DUST SPARKS & EMBERS CANVAS =================
@@ -1019,7 +1067,7 @@
             canvas.height = canvas.parentElement?.offsetHeight || window.innerHeight;
             
             const sparks = [];
-            const colors = ['#ffd700', '#ffec8b', '#ffaa00', '#fff8db', '#ff8c00', '#fff0a0'];
+            const colors = ['#ffffff', '#f2f7ff', '#e6f0ff', '#ffffff', '#d9e6ff', '#ffffff'];
             
             for (let i = 0; i < 50; i++) {
                 sparks.push({
