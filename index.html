@@ -222,9 +222,10 @@
                 
                 <!-- Outro Pure White Center Blessing (State: OUTRO_VIDEO End) -->
                 <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center pointer-events-none transition-opacity duration-1000 opacity-0">
-                    <span id="outroBlessingText" class="font-calligraphy text-2xl md:text-4xl font-medium tracking-[0.25em] text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.9),0_2px_15px_rgba(0,0,0,0.8)] text-center max-w-[80vw] leading-relaxed select-none">
-                        舞动千年，华彩乐章
-                    </span>
+                    <div id="outroBlessingText" class="font-sans text-3xl md:text-5xl font-normal tracking-[0.2em] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] text-center leading-[1.8] flex flex-col items-center justify-center space-y-2 select-none">
+                        <div>舞 动 千 年</div>
+                        <div>华 彩 乐 章</div>
+                    </div>
                 </div>
                 
                 <!-- 2c. Standby Silhouette Image Overlay (State: STANDBY_LOOP) -->
@@ -966,7 +967,23 @@
             const blessingText = document.getElementById('outroBlessingText');
             
             if (blessingOverlay && blessingText) {
-                blessingText.innerText = randomBlessing;
+                // Split 8-character blessing (e.g. "舞动千年，华彩乐章") into 2 distinct lines matching user design
+                let line1 = randomBlessing;
+                let line2 = "";
+                if (randomBlessing.includes("，")) {
+                    const parts = randomBlessing.split("，");
+                    line1 = parts[0];
+                    line2 = parts[1] || "";
+                } else if (randomBlessing.length >= 8) {
+                    line1 = randomBlessing.substring(0, 4);
+                    line2 = randomBlessing.substring(4);
+                }
+                
+                blessingText.innerHTML = `
+                    <div class="tracking-[0.35em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] font-normal">${line1.split('').join(' ')}</div>
+                    ${line2 ? `<div class="tracking-[0.35em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] font-normal">${line2.split('').join(' ')}</div>` : ''}
+                `;
+                
                 blessingOverlay.classList.remove('hidden');
                 void blessingOverlay.offsetWidth;
                 startBlessingSparks();
