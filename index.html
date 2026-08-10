@@ -221,32 +221,10 @@
                 <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
                 <!-- Outro Pure White Center Blessing (State: OUTRO_VIDEO End) -->
-                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-1000 opacity-0">
-                    <!-- Particle Canvas for Gentle White/Silver Rising Stars & Dust -->
-                    <canvas id="blessingSparksCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
-                    
-                    <!-- Exquisite Floating Dark Silk Card for Pure White Text -->
-                    <div class="relative z-10 flex items-center justify-center gap-4 md:gap-8 px-10 md:px-18 py-5 md:py-7 rounded-3xl" 
-                         style="background: radial-gradient(ellipse at center, rgba(12, 12, 15, 0.94) 0%, rgba(6, 6, 8, 0.88) 70%, rgba(0,0,0,0.65) 100%);
-                                border: 1.5px solid rgba(255, 255, 255, 0.40);
-                                box-shadow: 0 20px 60px rgba(0,0,0,0.95), 0 0 45px rgba(255, 255, 255, 0.25), inset 0 0 25px rgba(255, 255, 255, 0.12);
-                                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
-                        
-                        <!-- Left Tang Silver Cloud Ornament -->
-                        <svg class="w-8 h-8 md:w-12 md:h-12 text-white/90 filter drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]" viewBox="0 0 100 100" fill="currentColor">
-                            <path d="M90 50 C90 35, 75 25, 60 30 C50 15, 25 20, 20 40 C10 42, 5 55, 15 65 C25 75, 45 70, 50 60 C55 70, 75 75, 85 65 C95 55, 90 50, 90 50 Z M45 52 C40 58, 30 58, 25 52 C20 45, 25 35, 35 38 C42 40, 45 46, 45 52 Z"/>
-                        </svg>
-                        
-                        <!-- Main Pure White Calligraphy Text (Centered) -->
-                        <span id="outroBlessingText" class="font-calligraphy text-4xl md:text-6xl font-bold tracking-[0.3em] text-white drop-shadow-[0_0_35px_rgba(255,255,255,0.95),0_0_70px_rgba(255,255,255,0.7),0_2px_12px_rgba(0,0,0,0.98)] whitespace-nowrap select-none">
-                            舞动千年 · 华彩乐章
-                        </span>
-                        
-                        <!-- Right Tang Silver Cloud Ornament (Mirrored) -->
-                        <svg class="w-8 h-8 md:w-12 md:h-12 text-white/90 filter drop-shadow-[0_0_12px_rgba(255,255,255,0.9)] transform scale-x-[-1]" viewBox="0 0 100 100" fill="currentColor">
-                            <path d="M90 50 C90 35, 75 25, 60 30 C50 15, 25 20, 20 40 C10 42, 5 55, 15 65 C25 75, 45 70, 50 60 C55 70, 75 75, 85 65 C95 55, 90 50, 90 50 Z M45 52 C40 58, 30 58, 25 52 C20 45, 25 35, 35 38 C42 40, 45 46, 45 52 Z"/>
-                        </svg>
-                    </div>
+                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center pointer-events-none transition-opacity duration-1000 opacity-0">
+                    <span id="outroBlessingText" class="font-calligraphy text-5xl md:text-7xl font-bold tracking-[0.3em] text-white drop-shadow-[0_0_40px_rgba(255,255,255,1.0),0_4px_30px_rgba(0,0,0,0.95)] text-center whitespace-nowrap select-none">
+                        舞动千年，华彩乐章
+                    </span>
                 </div>
                 
                 <!-- 2c. Standby Silhouette Image Overlay (State: STANDBY_LOOP) -->
@@ -881,6 +859,16 @@
             const playerA = document.getElementById('videoPlayerA');
             const playerB = document.getElementById('videoPlayerB');
             
+            // Pre-stage 0s silhouette image directly behind curtain (z-25 is ABOVE standby video z-20)
+            if (stageImg) {
+                stageImg.src = figurine.reveal0sImage;
+                stageImg.style.zIndex = '25';
+                stageImg.classList.remove('opacity-0', 'hidden');
+                stageImg.classList.add('opacity-100');
+                stageImg.style.opacity = '1';
+                console.log(`[State Machine] Staged 0s silhouette image at z-25 under curtain: ${figurine.reveal0sImage}`);
+            }
+
             if (curtainOverlay) {
                 if (!curtainOverlay.src || !curtainOverlay.src.includes("video/curtain.mp4")) {
                     curtainOverlay.src = "video/curtain.mp4";
@@ -897,16 +885,7 @@
                         
                         // ONLY when curtain.mp4 actually begins rendering active frames:
                         curtainOverlay.onplaying = () => {
-                            // 1. Prepare stage silhouette image directly behind the opening curtain (z-25 is ABOVE standby video z-20)
-                            if (stageImg) {
-                                stageImg.src = figurine.reveal0sImage;
-                                stageImg.style.zIndex = '25';
-                                stageImg.classList.remove('opacity-0', 'hidden');
-                                stageImg.classList.add('opacity-100');
-                                stageImg.style.opacity = '1';
-                                console.log(`[State Machine] Staged 0s silhouette image at z-25 under curtain: ${figurine.reveal0sImage}`);
-                            }
-                            // 2. Simultaneously hide previous standby video cleanly
+                            // Hide previous standby video cleanly
                             if (playerA) { playerA.pause(); playerA.style.opacity = '0'; playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
                             if (playerB) { playerB.pause(); playerB.style.opacity = '0'; playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
                         };
