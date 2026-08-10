@@ -214,7 +214,7 @@
                 <video id="videoPlayerB" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" muted autoplay loop playsinline></video>
                 
                 <!-- OVERLAY player for the Opening Curtain (mix-blend-mode: screen makes black transparent) -->
-                <video id="curtainOverlayPlayer" class="absolute inset-0 w-full h-full object-contain z-30 hidden pointer-events-none" style="mix-blend-mode: screen;" playsinline preload="auto" src="video/curtain.mp4"></video>
+                <video id="curtainOverlayPlayer" class="absolute inset-0 w-full h-full object-contain z-30 opacity-0 pointer-events-none" style="mix-blend-mode: screen; transition: opacity 300ms ease-in-out;" muted playsinline preload="auto" src="video/curtain.mp4"></video>
                 
                 <!-- NEW: Prompt Overlays (Dance and Material) -->
                 <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_dance.png" alt="提示跳舞" />
@@ -875,6 +875,17 @@
                 }
             }
 
+            // PRE-STAGE 0s SILHOUETTE IMAGE IMMEDIATELY AT z-25 (0ms Instant Display, No Black Gap)
+            if (stageImg) {
+                stageImg.src = figurine.reveal0sImage;
+                stageImg.style.zIndex = '25';
+                stageImg.style.transition = 'none';
+                stageImg.classList.remove('opacity-0', 'hidden');
+                stageImg.classList.add('opacity-100');
+                stageImg.style.opacity = '1';
+                console.log(`[State Machine] Staged 0s silhouette image at z-25 under opening curtain: ${figurine.reveal0sImage}`);
+            }
+
             if (curtainOverlay) {
                 if (!curtainOverlay.src || !curtainOverlay.src.includes("video/curtain.mp4")) {
                     curtainOverlay.src = "video/curtain.mp4";
@@ -882,30 +893,17 @@
                 curtainOverlay.currentTime = 0;
                 curtainOverlay.style.zIndex = '30';
                 curtainOverlay.style.mixBlendMode = 'screen'; // Screen mode makes black background transparent so stageImg at z-25 shows cleanly!
-                curtainOverlay.style.transition = 'opacity 500ms ease-in-out';
-                curtainOverlay.style.opacity = '0';
-                curtainOverlay.classList.remove('hidden');
+                curtainOverlay.muted = true;
+                curtainOverlay.style.opacity = '1';
                 
                 try {
                     await new Promise((resolve) => {
                         curtainOverlay.onended = resolve;
                         
-                        // ONLY when curtain.mp4 actually begins rendering active frames (closed curtain covers stage):
                         curtainOverlay.onplaying = () => {
-                            // 1. Smoothly fade in curtain overlay over 500ms
                             curtainOverlay.style.opacity = '1';
                             
-                            // 2. Seamlessly stage 0s silhouette image directly behind the opening curtain (Instant 100% opacity, zero transition delay)
-                            if (stageImg) {
-                                stageImg.src = figurine.reveal0sImage;
-                                stageImg.style.zIndex = '25';
-                                stageImg.style.transition = 'none';
-                                stageImg.classList.remove('opacity-0', 'hidden');
-                                stageImg.classList.add('opacity-100');
-                                stageImg.style.opacity = '1';
-                                console.log(`[State Machine] Staged 0s silhouette image at z-25 under opening curtain: ${figurine.reveal0sImage}`);
-                            }
-                            // 3. Smoothly fade out previous standby video underneath over 500ms
+                            // Smoothly fade out previous standby video underneath over 500ms
                             if (playerA) { 
                                 playerA.style.transition = 'opacity 500ms ease-in-out';
                                 playerA.style.opacity = '0'; 
@@ -924,7 +922,7 @@
                         });
                     });
                 } finally {
-                    curtainOverlay.classList.add('hidden');
+                    curtainOverlay.style.opacity = '0';
                     curtainOverlay.pause();
                 }
             } else {
@@ -1096,8 +1094,8 @@
             curtainOverlay.src = "video/curtain_close.mp4";
             curtainOverlay.currentTime = 0;
             curtainOverlay.style.zIndex = '30';
-            curtainOverlay.classList.remove('hidden');
             curtainOverlay.style.mixBlendMode = 'normal'; // Normal blend mode renders rich solid curtain closing to full solid opacity
+            curtainOverlay.muted = true;
             curtainOverlay.style.opacity = '1';
             
             try {
@@ -1109,7 +1107,7 @@
                     });
                 });
             } finally {
-                curtainOverlay.classList.add('hidden');
+                curtainOverlay.style.opacity = '0';
                 curtainOverlay.pause();
             }
         }
