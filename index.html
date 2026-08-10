@@ -1425,19 +1425,21 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(videoEl, 0, 0, 160, 160);
                 
-                // Torso region: 25% to 75% width, 35% to 75% height
-                let minX = 40, maxX = 120, minY = 55, maxY = 120;
+                // Torso center chest region (exclude neck, face, and outer background)
+                let minX = 45, maxX = 115, minY = 55, maxY = 115;
                 if (lm && lm[11] && lm[12]) {
                     const sLX = lm[11].x * 160;
                     const sRX = lm[12].x * 160;
                     const sY = ((lm[11].y + lm[12].y) / 2) * 160;
-                    let hY = sY + Math.abs(sLX - sRX) * 1.5;
+                    let hY = sY + Math.abs(sLX - sRX) * 1.3;
                     if (lm[23] && lm[24]) hY = ((lm[23].y + lm[24].y) / 2) * 160;
                     
-                    minX = Math.max(0, Math.min(sLX, sRX) + 5);
-                    maxX = Math.min(160, Math.max(sLX, sRX) - 5);
-                    minY = Math.max(0, sY + 10);
-                    maxY = Math.min(160, hY - 5);
+                    const shoulderSpan = Math.abs(sLX - sRX);
+                    const centerX = (sLX + sRX) / 2;
+                    minX = Math.max(5, centerX - shoulderSpan * 0.32);
+                    maxX = Math.min(155, centerX + shoulderSpan * 0.32);
+                    minY = Math.max(5, sY + 12);
+                    maxY = Math.min(155, Math.min(hY - 5, sY + shoulderSpan * 1.1));
                 }
                 
                 const w = Math.max(10, Math.round(maxX - minX));
@@ -1449,8 +1451,8 @@
                 
                 for (let i = 0; i < d.length; i += 16) {
                     const r = d[i], g = d[i+1], b = d[i+2];
-                    // Skip skin tones
-                    if (r > 140 && g > 90 && b > 70 && r > g && g > b && (r - g) < 70 && (r - b) > 30) continue;
+                    // Skip skin tones (chin/neck/chest skin)
+                    if (r > 135 && g > 85 && b > 65 && r > g && g > b && (r - g) < 70 && (r - b) > 30) continue;
                     
                     total++;
                     const max = Math.max(r, g, b) / 255;
@@ -1466,47 +1468,53 @@
                         else hue = ((r / 255 - g / 255) / delta + 4) / 6;
                     }
                     const deg = hue * 360;
+                    const avgRgb = (r + g + b) / 3;
+                    const rgbDiff = Math.max(Math.abs(r - g), Math.abs(r - b), Math.abs(g - b));
                     
-                    // Black: Dark or low brightness (Webcam black shirts typically have val < 0.48, sat < 0.38)
-                    if (val < 0.48 && sat < 0.38) {
-                        black++;
+                    // 1. Red: Distinct warm hue with saturation
+                    if (((deg <= 28 || deg >= 332) && sat >= 0.25 && val >= 0.25) || (r > g + 40 && r > b + 40 && r > 90)) {
+                        red += 1.2;
                     }
-                    // White: High brightness & low saturation
-                    else if (val > 0.65 && sat < 0.20) {
-                        white++;
+                    // 2. Blue: Distinct cool hue with saturation
+                    else if (((deg >= 165 && deg <= 275) && sat >= 0.22 && val >= 0.22) || (b > r + 30 && b > g + 20 && b > 80)) {
+                        blue += 1.2;
                     }
-                    // Gray: Moderate brightness & low saturation
-                    else if (sat < 0.20 && val >= 0.48 && val <= 0.65) {
-                        gray++;
+                    // 3. Black: Very low brightness / dark pixels (Webcam black is usually < 65 RGB or val < 0.26)
+                    else if (val < 0.26 || (r < 65 && g < 65 && b < 65)) {
+                        black += 1.2;
                     }
-                    // Red: Hue near 0 / 360 with saturation
-                    else if ((deg <= 25 || deg >= 335) && sat >= 0.25) {
-                        red++;
+                    // 4. White: Clean bright pixels with low-to-moderate saturation (indoor lights often add slight yellow tint)
+                    else if ((val >= 0.48 && sat < 0.32) || (avgRgb >= 115 && rgbDiff < 45)) {
+                        white += 1.2;
                     }
-                    // Blue: Hue 170-280 with saturation
-                    else if ((deg >= 170 && deg <= 280) && sat >= 0.25) {
-                        blue++;
+                    // 5. Gray: Balanced medium brightness
+                    else if (sat < 0.28 && val >= 0.26 && val < 0.48) {
+                        gray += 1.0;
                     }
                     // Fallback
-                    else if (r > g + 25 && r > b + 25) red++;
-                    else if (b > r + 20 && b > g + 20) blue++;
-                    else if (val < 0.50) black++;
-                    else gray++;
+                    else if (val >= 0.48) {
+                        white += 0.8;
+                    } else if (val < 0.28) {
+                        black += 0.8;
+                    } else {
+                        gray += 0.8;
+                    }
                 }
                 
-                console.log(`[Pixel Color Sensor 🎨] Black:${black}, White:${white}, Red:${red}, Blue:${blue}, Gray:${gray}`);
                 const scores = [
+                    { c: '白', cnt: white },
                     { c: '黑', cnt: black },
                     { c: '红', cnt: red },
                     { c: '蓝', cnt: blue },
-                    { c: '白', cnt: white },
                     { c: '灰', cnt: gray }
                 ];
                 scores.sort((a, b) => b.cnt - a.cnt);
-                return scores[0].c;
+                const winner = scores[0].c;
+                console.log(`[Pixel Color Sensor 🎨] Winner: "${winner}" (White:${Math.round(white)}, Black:${Math.round(black)}, Red:${Math.round(red)}, Blue:${Math.round(blue)}, Gray:${Math.round(gray)})`);
+                return winner;
             } catch(e) {
                 console.warn("Pixel color detect error:", e);
-                return '黑';
+                return '白';
             }
         }
 
