@@ -1078,14 +1078,19 @@
                 });
             }
 
+            // Right when curtain is completely closed -> smoothly fade out white blessing text over 800ms
             if (blessingOverlay) {
+                console.log("[State Machine] Curtain completely closed -> Fading out blessing text overlay...");
+                blessingOverlay.style.transition = 'opacity 800ms ease-in-out';
                 blessingOverlay.classList.remove('opacity-100');
                 blessingOverlay.classList.add('opacity-0');
+                blessingOverlay.style.opacity = '0';
                 stopBlessingSparks();
+                await new Promise(resolve => setTimeout(resolve, 800));
                 blessingOverlay.classList.add('hidden');
             }
             
-            console.log("[State Machine] Curtain completely closed -> returning to STANDBY_LOOP");
+            console.log("[State Machine] Blessing text faded out -> returning to STANDBY_LOOP");
             resetKiosk();
         }
 
