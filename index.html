@@ -217,50 +217,12 @@
                 <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_dance.png" alt="提示跳舞" />
                 <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
-                <!-- Outro Imperial Scroll Blessing Overlay (State: OUTRO_VIDEO End) -->
-                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center p-4 transition-all duration-700 opacity-0 pointer-events-none bg-black/60 backdrop-blur-sm">
-                    <!-- Imperial Scroll Wrapper -->
-                    <div id="imperialScrollWrapper" class="relative flex items-center justify-center transition-all duration-1000 transform scale-100">
-                        <!-- Left Wooden Scroll Roller -->
-                        <div id="scrollRollerLeft" class="z-30 w-5 h-44 rounded-sm bg-gradient-to-r from-[#3a1208] via-[#6d2008] to-[#250904] border-y-4 border-amber-400 shadow-[0_10px_25px_rgba(0,0,0,0.85)] flex flex-col justify-between items-center py-2">
-                            <div class="w-3.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></div>
-                            <div class="w-1 h-24 bg-amber-500/30 rounded-full"></div>
-                            <div class="w-3.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></div>
-                        </div>
-
-                        <!-- Middle Parchment Silk Scroll Body (Unrolls smoothly) -->
-                        <div id="scrollBody" class="relative overflow-hidden h-40 w-0 transition-all duration-1000 ease-out flex flex-col items-center justify-center px-6 border-y-4 border-[#b8860b] shadow-[inset_0_0_40px_rgba(139,69,19,0.4),0_15px_40px_rgba(0,0,0,0.9)]" style="background: linear-gradient(180deg, #fdf6e7 0%, #f4e3c1 50%, #e2caa0 100%);">
-                            <!-- Traditional Brocade Border Pattern -->
-                            <div class="absolute inset-x-0 top-1 h-2 border-b border-[#b8860b]/40 opacity-70" style="background-image: radial-gradient(#b8860b 1px, transparent 1px); background-size: 8px 8px;"></div>
-                            <div class="absolute inset-x-0 bottom-1 h-2 border-t border-[#b8860b]/40 opacity-70" style="background-image: radial-gradient(#b8860b 1px, transparent 1px); background-size: 8px 8px;"></div>
-
-                            <!-- Scroll Header -->
-                            <div class="text-[9px] font-classical text-[#8b2500] tracking-[0.35em] uppercase font-bold mb-1 opacity-0 transition-opacity duration-700 scroll-content whitespace-nowrap">
-                                ✦ 盛唐·典藏吉祥定格 ✦
-                            </div>
-                            
-                            <!-- Calligraphy Main Blessing Text -->
-                            <div id="outroBlessingText" class="text-2xl md:text-3xl font-classical font-black text-[#2e1005] tracking-[0.25em] py-1.5 px-4 text-center drop-shadow-[0_2px_4px_rgba(139,69,19,0.3)] opacity-0 transition-opacity duration-700 scroll-content whitespace-nowrap">
-                                一舞千年，余韵绕梁
-                            </div>
-                            
-                            <!-- Red Imperial Seal Stamp -->
-                            <div class="absolute right-4 bottom-2.5 w-10 h-10 border-2 border-[#b22222] text-[#b22222] font-classical text-[7px] leading-tight font-black rounded flex items-center justify-center p-0.5 transform rotate-[-8deg] shadow-sm opacity-0 transition-opacity duration-700 scroll-content">
-                                大唐<br/>天宝
-                            </div>
-
-                            <!-- Subtitle -->
-                            <div class="text-[7px] font-roman text-[#8b4513]/70 tracking-widest uppercase mt-0.5 opacity-0 transition-opacity duration-700 scroll-content whitespace-nowrap">
-                                MUSEUM COMMEMORATIVE BLESSING
-                            </div>
-                        </div>
-
-                        <!-- Right Wooden Scroll Roller -->
-                        <div id="scrollRollerRight" class="z-30 w-5 h-44 rounded-sm bg-gradient-to-r from-[#250904] via-[#6d2008] to-[#3a1208] border-y-4 border-amber-400 shadow-[0_10px_25px_rgba(0,0,0,0.85)] flex flex-col justify-between items-center py-2">
-                            <div class="w-3.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></div>
-                            <div class="w-1 h-24 bg-amber-500/30 rounded-full"></div>
-                            <div class="w-3.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></div>
-                        </div>
+                <!-- Outro Minimalist Blessing Banner (State: OUTRO_VIDEO End) -->
+                <div id="outroBlessingOverlay" class="hidden absolute inset-x-0 bottom-16 z-40 flex items-center justify-center p-4 transition-all duration-700 opacity-0 pointer-events-none">
+                    <div class="px-8 py-2.5 rounded-full bg-black/65 backdrop-blur-md border border-amber-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex items-center justify-center">
+                        <span id="outroBlessingText" class="text-sm md:text-base font-classical font-semibold text-amber-200/90 tracking-[0.3em] text-center drop-shadow-[0_2px_8px_rgba(212,175,55,0.4)] whitespace-nowrap">
+                            一舞千年 · 余韵绕梁
+                        </span>
                     </div>
                 </div>
                 
@@ -992,36 +954,23 @@
             const randomBlessing = BLESSINGS_50[Math.floor(Math.random() * BLESSINGS_50.length)];
             console.log(`[State Machine] Outro video ended -> Random 1/50 Blessing: "${randomBlessing}"`);
             
-            // Imperial Chinese Scroll Opening Effect
+            // Display refined bottom blessing banner
             const blessingOverlay = document.getElementById('outroBlessingOverlay');
             const blessingText = document.getElementById('outroBlessingText');
-            const scrollBody = document.getElementById('scrollBody');
-            const scrollContents = document.querySelectorAll('.scroll-content');
             
-            if (blessingOverlay && blessingText && scrollBody) {
+            if (blessingOverlay && blessingText) {
                 blessingText.innerText = randomBlessing;
                 blessingOverlay.classList.remove('hidden');
                 void blessingOverlay.offsetWidth;
                 blessingOverlay.classList.remove('opacity-0');
                 blessingOverlay.classList.add('opacity-100');
                 
-                // Unroll scroll smoothly
-                setTimeout(() => {
-                    scrollBody.style.width = '380px';
-                    scrollContents.forEach(el => el.classList.remove('opacity-0'));
-                }, 150);
-                
                 // Display blessing for 4.5 seconds
                 await new Promise(r => setTimeout(r, 4500));
                 
-                // Roll up scroll
-                scrollBody.style.width = '0px';
-                scrollContents.forEach(el => el.classList.add('opacity-0'));
-                await new Promise(r => setTimeout(r, 600));
-                
                 blessingOverlay.classList.remove('opacity-100');
                 blessingOverlay.classList.add('opacity-0');
-                await new Promise(r => setTimeout(r, 400));
+                await new Promise(r => setTimeout(r, 600));
                 blessingOverlay.classList.add('hidden');
             }
             
@@ -1076,14 +1025,14 @@
 
             window.onUserStill = function(isAbsent) {
                 if (isAbsent && window.presenceTimer) {
-                    console.log("[State Machine] User left before 5 seconds. Cancelling cinematic trigger.");
+                    console.log("[State Machine] User left. Cancelling cinematic trigger.");
                     clearTimeout(window.presenceTimer);
                     window.presenceTimer = null;
                 }
 
-                // If user leaves frame, or is still (hands down) for 15 seconds
+                // If user leaves frame, or is still (hands down) for 5 seconds
                 if (currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.WAITING_FOR_SPIN_RESUME || currentState === AppState.STANDBY_WAIT) {
-                    console.log(`[State Machine] User ${isAbsent ? 'left the scene' : 'is still for 15s'} -> OUTRO_VIDEO`);
+                    console.log(`[State Machine] User ${isAbsent ? 'left the scene' : 'is still for 5s'} -> OUTRO_VIDEO`);
                     playOutroVideo();
                 }
             };
@@ -1091,17 +1040,17 @@
             window.onUserDetected = function() {
                 if (currentState === AppState.STANDBY_LOOP) {
                     if (!window.presenceTimer) {
-                        console.log("[State Machine] User detected! Running color match and starting 5s presence countdown...");
+                        console.log("[State Machine] User detected! Running instant color match and fast 1.5s presence countdown...");
                         
                         triggerSilentBackgroundMatch().catch(e => console.error("[State Machine] Match failed:", e));
 
                         window.presenceTimer = setTimeout(() => {
                             if (currentState === AppState.STANDBY_LOOP) {
-                                console.log("[State Machine] User presence confirmed for 5 seconds! Auto-starting cinematic flow.");
+                                console.log("[State Machine] User presence confirmed for 1.5 seconds! Auto-starting cinematic flow.");
                                 startCinematicFlow();
                             }
                             window.presenceTimer = null;
-                        }, 5000);
+                        }, 1500);
                     }
                 }
             };
@@ -1209,13 +1158,13 @@
                     mocap.isPoseTriggerMode = true;
                 }
                 
-                // If user leaves or stays still for 8 seconds after transition, proceed to outro
+                // If user leaves or stays still for 5 seconds after transition, proceed to outro
                 window.spinResumeTimer = setTimeout(() => {
-                    if (currentState === AppState.WAITING_FOR_SPIN_RESUME) {
-                        console.log(`[State Machine] 8s elapsed without raising hands. Triggering outro.`);
+                    if (currentState === AppState.WAITING_FOR_SPIN_RESUME || currentState === AppState.WAITING_FOR_SPIN) {
+                        console.log(`[State Machine] 5s elapsed without raising hands. Triggering outro.`);
                         playOutroVideo();
                     }
-                }, 8000);
+                }, 5000);
             };
             
             try {

@@ -839,10 +839,10 @@ class MotionCaptureEngine {
             if (this.movementIntensity < STILL_THRESHOLD) {
                 if (!this.stillStartTime) {
                     this.stillStartTime = now;
-                } else if (now - this.stillStartTime > 15000) { // Still for 15 seconds
+                } else if (now - this.stillStartTime > 5000) { // Still for 5 seconds
                     if (!this.isStill) {
                         this.isStill = true;
-                        console.log("[Mocap Engine] User is STILL for 15 seconds");
+                        console.log("[Mocap Engine] User is STILL for 5 seconds");
                         if (typeof window.onUserStill === 'function') {
                             window.onUserStill(false); // User is just still
                         }
