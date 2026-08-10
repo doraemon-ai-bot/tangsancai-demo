@@ -885,7 +885,7 @@
                 curtainOverlay.src = "video/curtain.mp4?v=20260810_fresh";
                 curtainOverlay.style.zIndex = '30';
                 curtainOverlay.classList.remove('hidden');
-                curtainOverlay.style.mixBlendMode = 'screen';
+                curtainOverlay.style.mixBlendMode = 'normal'; // Fix: Normal blend mode prevents screen brightening double-exposure
                 curtainOverlay.style.opacity = '1';
                 
                 try {
@@ -903,7 +903,7 @@
                                 stageImg.style.opacity = '1';
                                 console.log(`[State Machine] Staged 0s silhouette image at z-25 under curtain: ${figurine.reveal0sImage}`);
                             }
-                            // 2. Simultaneously hide previous standby video
+                            // 2. Simultaneously hide previous standby video cleanly
                             if (playerA) { playerA.pause(); playerA.style.opacity = '0'; playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
                             if (playerB) { playerB.pause(); playerB.style.opacity = '0'; playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
                         };
@@ -921,28 +921,10 @@
                 await playSeamlessVideo("video/curtain.mp4", false, 'normal');
             }
             
-            // --- 阶段 2: 帘子拉开完毕 -> 立即隐藏剪影图片，由出场视频接管播放 ---
-            if (stageImg) {
-                stageImg.classList.remove('opacity-100');
-                stageImg.classList.add('opacity-0');
-                stageImg.style.opacity = '0';
-                stageImg.style.zIndex = '5';
-            }
-
-            // 等待 Gemma 4 视觉大模型识别完成（最多等 3.0s），确保出场视频与 Gemma 识别结论 100% 同步！
-            if (window.gemmaVlmPromise) {
-                console.log("[State Machine] ⏳ 正在等待 Gemma 4 视觉大模型确认识别结论...");
-                try {
-                    await Promise.race([
-                        window.gemmaVlmPromise,
-                        new Promise(r => setTimeout(r, 3000))
-                    ]);
-                } catch (e) {}
-            }
-
+            // --- 阶段 2: 帘子拉开完毕 -> 保持 stageImg 0s 图片在 z-25 垫底，由 reveal 出场视频 0ms 无缝接管（决不黑屏）---
             const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
             const finalFigurine = FIGURINES_DB[finalMatchedId] || FIGURINES_DB['white'];
-            console.log(`[State Machine] Gemma Vision 已确认 -> 播放匹配出场视频: ${finalFigurine.revealVideo} (颜色: ${finalFigurine.tags?.color || '白'})`);
+            console.log(`[State Machine] Curtain finished -> Playing reveal video: ${finalFigurine.revealVideo} (Color: ${finalFigurine.tags?.color || '白'})`);
             
             const showPromptCallback = () => {
                 console.log("[State Machine] Reveal video ended -> STANDBY_WAIT (Raise Left Hand Challenge)");
