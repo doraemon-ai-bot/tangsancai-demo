@@ -862,6 +862,17 @@
             const playerA = document.getElementById('videoPlayerA');
             const playerB = document.getElementById('videoPlayerB');
 
+            // PRE-BUFFER REVEAL VIDEO ON INACTIVE PLAYER WHILE CURTAIN OPENS (0ms INSTANT PLAYBACK!)
+            const targetPlayer = (activePlayer === playerA) ? playerB : playerA;
+            if (targetPlayer && figurine.revealVideo) {
+                if (!targetPlayer.src.includes(figurine.revealVideo)) {
+                    targetPlayer.src = figurine.revealVideo;
+                }
+                targetPlayer.preload = "auto";
+                targetPlayer.load();
+                console.log(`[Video Preload 🚀] Pre-buffering reveal video while curtain opens: ${figurine.revealVideo} on ${targetPlayer.id}`);
+            }
+
             if (curtainOverlay) {
                 if (!curtainOverlay.src || !curtainOverlay.src.includes("video/curtain.mp4")) {
                     curtainOverlay.src = "video/curtain.mp4";
