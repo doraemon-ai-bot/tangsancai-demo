@@ -214,7 +214,7 @@
                 <video id="videoPlayerB" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" muted autoplay loop playsinline></video>
                 
                 <!-- OVERLAY player for the Opening Curtain (mix-blend-mode: screen makes black transparent) -->
-                <video id="curtainOverlayPlayer" class="absolute inset-0 w-full h-full object-contain z-30 hidden pointer-events-none" style="mix-blend-mode: screen;" playsinline preload="auto"></video>
+                <video id="curtainOverlayPlayer" class="absolute inset-0 w-full h-full object-contain z-30 hidden pointer-events-none" style="mix-blend-mode: screen;" playsinline preload="auto" src="video/curtain.mp4"></video>
                 
                 <!-- NEW: Prompt Overlays (Dance and Material) -->
                 <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_dance.png" alt="提示跳舞" />
@@ -895,10 +895,11 @@
                             // 1. Smoothly fade in curtain overlay over 500ms
                             curtainOverlay.style.opacity = '1';
                             
-                            // 2. Seamlessly stage 0s silhouette image directly behind the opening curtain
+                            // 2. Seamlessly stage 0s silhouette image directly behind the opening curtain (Instant 100% opacity, zero transition delay)
                             if (stageImg) {
                                 stageImg.src = figurine.reveal0sImage;
                                 stageImg.style.zIndex = '25';
+                                stageImg.style.transition = 'none';
                                 stageImg.classList.remove('opacity-0', 'hidden');
                                 stageImg.classList.add('opacity-100');
                                 stageImg.style.opacity = '1';
@@ -936,6 +937,7 @@
             
             if (stageImg) {
                 stageImg.src = finalFigurine.reveal0sImage;
+                stageImg.style.transition = 'none';
                 stageImg.style.opacity = '1';
                 stageImg.style.zIndex = '25';
             }
