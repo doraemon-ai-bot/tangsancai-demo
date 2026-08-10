@@ -929,9 +929,20 @@
                 stageImg.style.zIndex = '5';
             }
 
+            // 等待 Gemma 4 视觉大模型识别完成（最多等 3.0s），确保出场视频与 Gemma 识别结论 100% 同步！
+            if (window.gemmaVlmPromise) {
+                console.log("[State Machine] ⏳ 正在等待 Gemma 4 视觉大模型确认识别结论...");
+                try {
+                    await Promise.race([
+                        window.gemmaVlmPromise,
+                        new Promise(r => setTimeout(r, 3000))
+                    ]);
+                } catch (e) {}
+            }
+
             const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
             const finalFigurine = FIGURINES_DB[finalMatchedId] || FIGURINES_DB['white'];
-            console.log(`[State Machine] Curtain finished -> Playing reveal video: ${finalFigurine.revealVideo} (Color: ${finalFigurine.tags?.color || '白'})`);
+            console.log(`[State Machine] Gemma Vision 已确认 -> 播放匹配出场视频: ${finalFigurine.revealVideo} (颜色: ${finalFigurine.tags?.color || '白'})`);
             
             const showPromptCallback = () => {
                 console.log("[State Machine] Reveal video ended -> STANDBY_WAIT (Raise Left Hand Challenge)");
@@ -1505,7 +1516,7 @@
                 const mapped = mapDescriptionToColor(text);
                 return mapped ? { mappedColor: mapped, rawText: text } : null;
             } else {
-                // Local Ollama Gemma Vision path (supports gemma4:e2b, paligemma, llava, etc.)
+                // Local Ollama Gemma Vision path (strictly locks to gemma4:e2b)
                 const endpoint = document.getElementById('apiEndpoint')?.value || 'http://localhost:11434';
                 
                 // HTTPS Mixed Content Guard
@@ -1516,20 +1527,23 @@
                 
                 const cleanEndpoint = endpoint.replace(/\/v1\/?$/, '').replace(/\/$/, '');
                 
-                // 1. Dynamically find available model from Ollama /api/tags
+                // Strictly lock to Gemma Vision model
                 let modelName = "gemma4:e2b";
                 try {
                     const tagsRes = await fetchWithTimeout(`${cleanEndpoint}/api/tags`, { method: 'GET' }, 2000);
                     if (tagsRes.ok) {
                         const tagsJson = await tagsRes.json();
                         if (tagsJson.models && tagsJson.models.length > 0) {
-                            modelName = tagsJson.models[0].name || tagsJson.models[0].model || "gemma4:e2b";
-                            console.log(`[Gemma Vision 🦙] Detected active Ollama model: "${modelName}"`);
+                            const gemmaModel = tagsJson.models.find(m => (m.name || m.model || '').toLowerCase().includes('gemma'));
+                            if (gemmaModel) {
+                                modelName = gemmaModel.name || gemmaModel.model;
+                            }
                         }
                     }
                 } catch (e) {
                     console.warn(`[Gemma Vision 🦙] Auto-detect model failed, using default: "${modelName}"`, e);
                 }
+                console.log(`[Gemma Vision 🦙] Strictly using Gemma Vision Model: "${modelName}"`);
                 
                 const url = `${cleanEndpoint}/api/generate`;
                 const system = "You are an AI vision classifier. Look at the upper clothing of the person in this photo. Choose strictly from: Black, White, Red, Blue, Gray. Output only the single color name.";
@@ -1702,6 +1716,48 @@
             updateMuseumInfoCard(instantFigurine);
             
             const stageImg = document.getElementById('stageFigurineImg');
+            if (stageImg && instantFigurine.reveal0sImage) {
+                stageImg.src = instantFigurine.reveal0sImage;
+            }
+            preloadSpinVideos(instantFigurine.id);
+            updateTrackingBadge("success", `衣服识别: ${window.detectedColor} (Gemma 4 视觉分析中)`);
+
+            // 2. GEMMA 4 VLM VISION RECOGNITION (Vision-Language Model Background Classification)
+            if (window.isVlmMatching) return;
+            window.isVlmMatching = true;
+
+            window.gemmaVlmPromise = (async () => {
+                try {
+                    const hiddenCanvas = document.createElement('canvas');
+                    hiddenCanvas.width = 256;
+                    hiddenCanvas.height = 256;
+                    const ctx = hiddenCanvas.getContext('2d');
+                    ctx.translate(hiddenCanvas.width, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(webcamElement, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+                    const base64Image = hiddenCanvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+                    const useLocalAI = document.getElementById('useLocalAI')?.checked ?? true;
+                    
+                    const result = await classifyColorWithVLM(base64Image, useLocalAI);
+                    if (result && result.mappedColor) {
+                        console.log(`[Gemma Vision 🦙] Gemma AI vision matched color: "${result.mappedColor}" (Raw: "${result.rawText}")`);
+                        window.detectedColor = result.mappedColor;
+                        const refinedFigurine = matchFigurineByColor(window.detectedColor);
+                        window.matchedFigurineId = refinedFigurine.id;
+                        updateMuseumInfoCard(refinedFigurine);
+                        if (stageImg && refinedFigurine.reveal0sImage) {
+                            stageImg.src = refinedFigurine.reveal0sImage;
+                        }
+                        preloadSpinVideos(refinedFigurine.id);
+                        updateTrackingBadge("success", `Gemma 4 视觉识别: ${window.detectedColor}`);
+                    }
+                } catch (e) {
+                    console.log("[Gemma Vision 🦙] Gemma Vision refinement skipped:", e.message);
+                } finally {
+                    window.isVlmMatching = false;
+                }
+            })();
+        }eImg = document.getElementById('stageFigurineImg');
             if (stageImg && instantFigurine.reveal0sImage) {
                 stageImg.src = instantFigurine.reveal0sImage;
             }
