@@ -533,27 +533,28 @@ class MotionCaptureEngine {
                 return; // Override standard angle scoring
             }
 
-            // --- STRICT RAISE ONE HAND (optimal_1) ---
+            // --- RAISE ONE HAND (optimal_1) ---
             if (this.activePoseKey === 'optimal_1') {
                 let isRaised = false;
                 
-                // Strictly check:
-                // 1. LEFT wrist (15) is significantly above LEFT shoulder (11) by at least 0.08 normalized height
-                // 2. RIGHT wrist (16) is NOT raised (stays below or near right shoulder 12)
-                const leftArmRaised = hasLandmarks([15, 11]) && (lm[15].y < lm[11].y - 0.08);
-                const rightArmDown = hasLandmarks([16, 12]) ? (lm[16].y > lm[12].y - 0.02) : true;
+                // 1. LEFT wrist (15) is raised clearly above LEFT shoulder (11)
+                const leftArmRaised = hasLandmarks([15, 11]) && (lm[15].y < lm[11].y);
                 
-                if (leftArmRaised && rightArmDown) {
+                // 2. RIGHT wrist (16) is NOT fully raised high above the right shoulder/head
+                // Right hand can move naturally (bent, holding phone, at chest/waist) as long as it's not also raised high up
+                const rightArmNotRaisedHigh = hasLandmarks([16, 12]) ? (lm[16].y > (lm[12].y - 0.08)) : true;
+                
+                if (leftArmRaised && rightArmNotRaisedHigh) {
                     isRaised = true;
                 }
                 
                 if (isRaised) {
                     if (!this.matchStartTime) {
                         this.matchStartTime = Date.now();
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `识别到举起左手！请保持...`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `识别到举手！请保持...`);
                     } else {
                         const duration = Date.now() - this.matchStartTime;
-                        const progress = Math.min(100, Math.round((duration / 800) * 100)); // 800ms deliberate hold
+                        const progress = Math.min(100, Math.round((duration / 800) * 100)); // 800ms hold
                         if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `动作契合中: ${progress}%`);
                         
                         if (duration >= 800) { 
@@ -565,7 +566,7 @@ class MotionCaptureEngine {
                 } else {
                     if (this.matchStartTime) {
                         this.matchStartTime = null;
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请举起左手并保持片刻`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请举起一只手并保持片刻`);
                     }
                 }
                 return; // Override standard angle scoring
