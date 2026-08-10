@@ -825,6 +825,7 @@
             }
 
             // 6. Reset matched figurine to default
+            window.isColorLocked = false;
             window.matchedFigurineId = 'white';
             window.detectedColor = 'white';
             window.aiBlessing = "岁岁平安，万事大吉";
@@ -842,6 +843,7 @@
             
             console.log("[State Machine] Starting cinematic flow -> INTRO_REVEAL");
             currentState = AppState.INTRO_REVEAL;
+            window.isColorLocked = true; // Lock color prediction so late background samples cannot overwrite matched color!
             
             // Hide start overlay so it's not clickable anymore
             const startOverlay = document.getElementById('startOverlay');
@@ -866,9 +868,10 @@
                 }
                 curtainOverlay.currentTime = 0;
                 curtainOverlay.style.zIndex = '30';
-                curtainOverlay.classList.remove('hidden');
                 curtainOverlay.style.mixBlendMode = 'screen'; // Screen mode makes black background transparent so stageImg at z-25 shows cleanly!
-                curtainOverlay.style.opacity = '1';
+                curtainOverlay.style.transition = 'opacity 500ms ease-in-out';
+                curtainOverlay.style.opacity = '0';
+                curtainOverlay.classList.remove('hidden');
                 
                 try {
                     await new Promise((resolve) => {
@@ -876,7 +879,10 @@
                         
                         // ONLY when curtain.mp4 actually begins rendering active frames (closed curtain covers stage):
                         curtainOverlay.onplaying = () => {
-                            // 1. Seamlessly stage 0s silhouette image directly behind the opening curtain
+                            // 1. Smoothly fade in curtain overlay over 500ms
+                            curtainOverlay.style.opacity = '1';
+                            
+                            // 2. Seamlessly stage 0s silhouette image directly behind the opening curtain
                             if (stageImg) {
                                 stageImg.src = figurine.reveal0sImage;
                                 stageImg.style.zIndex = '25';
@@ -885,9 +891,17 @@
                                 stageImg.style.opacity = '1';
                                 console.log(`[State Machine] Staged 0s silhouette image at z-25 under opening curtain: ${figurine.reveal0sImage}`);
                             }
-                            // 2. Simultaneously hide previous standby video underneath
-                            if (playerA) { playerA.pause(); playerA.style.opacity = '0'; playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
-                            if (playerB) { playerB.pause(); playerB.style.opacity = '0'; playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
+                            // 3. Smoothly fade out previous standby video underneath over 500ms
+                            if (playerA) { 
+                                playerA.style.transition = 'opacity 500ms ease-in-out';
+                                playerA.style.opacity = '0'; 
+                                setTimeout(() => { try { playerA.pause(); } catch(e){} }, 500);
+                            }
+                            if (playerB) { 
+                                playerB.style.transition = 'opacity 500ms ease-in-out';
+                                playerB.style.opacity = '0'; 
+                                setTimeout(() => { try { playerB.pause(); } catch(e){} }, 500);
+                            }
                         };
 
                         curtainOverlay.play().catch(e => {
@@ -1685,6 +1699,8 @@
         }
 
         async function triggerSilentBackgroundMatch() {
+            if (window.isColorLocked) return; // Do not sample or overwrite once cinematic flow has locked the matched color!
+
             // 1. INSTANT COMPUTER VISION TORSO PIXEL SENSOR (0.005s Instant Detection)
             const instantColor = detectDominantTorsoColor(webcamElement, window.mocap?.lastLandmarks);
             window.detectedColor = instantColor;
