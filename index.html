@@ -857,6 +857,8 @@
             const stageImg = document.getElementById('stageFigurineImg');
             const curtainOverlay = document.getElementById('curtainOverlayPlayer');
             const playerA = document.getElementById('videoPlayerA');
+            const playerB = document.getElementById('videoPlayerB');
+            
             // 1. Immediately pause & hide standby video so it does not interfere or double-expose
             if (playerA) { playerA.pause(); playerA.style.opacity = '0'; playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
             if (playerB) { playerB.pause(); playerB.style.opacity = '0'; playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
@@ -1601,29 +1603,29 @@
                     const rgbDiff = Math.max(Math.abs(r - g), Math.abs(r - b), Math.abs(g - b));
                     
                     // 1. Red: Warm hue with distinct red channel dominance
-                    if (((deg <= 30 || deg >= 330) && sat >= 0.25 && val >= 0.22) || (r > g + 35 && r > b + 35 && r > 85)) {
+                    if (((deg <= 32 || deg >= 328) && sat >= 0.22 && val >= 0.20) || (r > g + 30 && r > b + 30 && r > 80)) {
                         red += 1.2;
                     }
                     // 2. Blue: Cool hue with distinct blue channel dominance
-                    else if (((deg >= 165 && deg <= 275) && sat >= 0.22 && val >= 0.22) || (b > r + 25 && b > g + 15 && b > 75)) {
+                    else if (((deg >= 165 && deg <= 275) && sat >= 0.20 && val >= 0.20) || (b > r + 20 && b > g + 12 && b > 70)) {
                         blue += 1.2;
                     }
-                    // 3. Black: Low-to-medium brightness (webcam AGC renders black clothing at RGB 40-100 / val < 0.42)
-                    else if (val < 0.42 || avgRgb < 105 || (r < 100 && g < 100 && b < 100)) {
+                    // 3. Black: Dark-to-medium brightness (Webcam auto-exposure renders black clothing at RGB 40-130 / val < 0.54)
+                    else if (val < 0.54 || avgRgb < 135 || (r < 130 && g < 130 && b < 130)) {
                         black += 1.2;
                     }
-                    // 4. White: Clean high-brightness pixels (RGB >= 145 & val >= 0.58)
-                    else if ((val >= 0.58 && sat < 0.28 && avgRgb >= 145) || (avgRgb >= 155 && rgbDiff < 35)) {
+                    // 4. White: Clean high-brightness pixels (RGB >= 160 & val >= 0.63)
+                    else if ((val >= 0.63 && sat < 0.28 && avgRgb >= 160) || (avgRgb >= 170 && rgbDiff < 30)) {
                         white += 1.2;
                     }
-                    // 5. Gray: Balanced medium brightness (RGB 105 - 144)
-                    else if (sat < 0.25 && avgRgb >= 105 && avgRgb < 145) {
+                    // 5. Gray: Balanced medium brightness
+                    else if (sat < 0.25 && avgRgb >= 135 && avgRgb < 160) {
                         gray += 1.0;
                     }
                     // Fallbacks
-                    else if (avgRgb >= 145) {
+                    else if (avgRgb >= 160) {
                         white += 0.8;
-                    } else if (avgRgb < 105) {
+                    } else if (avgRgb < 135) {
                         black += 0.8;
                     } else {
                         gray += 0.8;
