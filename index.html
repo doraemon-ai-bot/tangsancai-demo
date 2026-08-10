@@ -719,8 +719,9 @@
                 nextPlayer.classList.remove('opacity-100');
                 nextPlayer.classList.add('opacity-0');
                 
-                if (!nextPlayer.src.endsWith(src)) {
-                    nextPlayer.src = src;
+                const versionedSrc = src.includes('?') ? src : `${src}?v=20260810_fresh`;
+                if (!nextPlayer.src.includes(src)) {
+                    nextPlayer.src = versionedSrc;
                 }
                 nextPlayer.loop = loop;
                 nextPlayer.style.mixBlendMode = blendMode;
