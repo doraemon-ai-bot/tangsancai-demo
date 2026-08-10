@@ -777,8 +777,14 @@
                     console.log(`[Video Loading ▶️] Play promise resolved for: ${src}`);
                     if (loop) finish();
                 }).catch(e => {
-                    console.warn(`[Video Loading ⚠️] Play failed for ${src} (Autoplay policy?):`, e);
-                    finish();
+                    console.warn(`[Video Loading ⚠️] Play failed with audio for ${src}, retrying muted fallback:`, e);
+                    nextPlayer.muted = true;
+                    nextPlayer.play().then(() => {
+                        if (loop) finish();
+                    }).catch(err => {
+                        console.error("Fatal play error:", err);
+                        finish();
+                    });
                 });
             });
         }
@@ -1019,16 +1025,17 @@
             });
 
             window.onUserSpin = function() {
-                console.log(`[State Machine] onUserSpin triggered! currentState = "${currentState}"`);
-                if (currentState === AppState.DANCE_LOOP || currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.WAITING_FOR_SPIN_RESUME) {
+                console.log(`[State Machine] onUserSpin triggered (Spread Arms Gesture)! currentState = "${currentState}"`);
+                // STRICT: ONLY trigger material transition when waiting for user gesture! NEVER interrupt active dance!
+                if (currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.WAITING_FOR_SPIN_RESUME) {
                     if (window.spinResumeTimer) {
                         clearTimeout(window.spinResumeTimer);
                         window.spinResumeTimer = null;
                     }
-                    console.log(`[State Machine] User spin detected -> SPIN_TRANSITION (Index: ${spinVideoIndex + 1})`);
+                    console.log(`[State Machine] Spread arms gesture validated -> Playing material transition (Step ${spinVideoIndex + 1})`);
                     triggerSpinTransition();
                 } else {
-                    console.warn(`[State Machine] Spin ignored in current state: "${currentState}"`);
+                    console.log(`[State Machine] Gesture ignored in current state: "${currentState}"`);
                 }
             };
 
@@ -1040,7 +1047,7 @@
                 }
 
                 // If user leaves frame, or is still (hands down) for 15 seconds
-                if (currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.STANDBY_WAIT) {
+                if (currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.WAITING_FOR_SPIN_RESUME || currentState === AppState.STANDBY_WAIT) {
                     console.log(`[State Machine] User ${isAbsent ? 'left the scene' : 'is still for 15s'} -> OUTRO_VIDEO`);
                     playOutroVideo();
                 }
@@ -1049,9 +1056,8 @@
             window.onUserDetected = function() {
                 if (currentState === AppState.STANDBY_LOOP) {
                     if (!window.presenceTimer) {
-                        console.log("[State Machine] User detected! Running VLM color match and starting 5s presence countdown...");
+                        console.log("[State Machine] User detected! Running color match and starting 5s presence countdown...");
                         
-                        // Immediately run VLM match and update lower layer image to reveal_{color}_0s.jpg
                         triggerSilentBackgroundMatch().catch(e => console.error("[State Machine] Match failed:", e));
 
                         window.presenceTimer = setTimeout(() => {
@@ -1078,8 +1084,8 @@
             const danceVid = figurine ? figurine.danceVideo : "video/white_dance.mp4";
             
             if (mocap) {
-                mocap.spinState = 0;
-                mocap.spinTimer = 0;
+                mocap.isPoseTriggerMode = false; // Disable trigger during active dance playback
+                mocap.matchStartTime = null;
             }
             
             // Hide "Prompt Dance" PNG
@@ -1096,14 +1102,14 @@
                     void promptMat.offsetWidth;
                     promptMat.classList.add('opacity-100');
                 }
-                console.log(`[State Machine] Dance video ended. Transitioning to WAITING_FOR_SPIN.`);
+                console.log(`[State Machine] Dance video ended. Transitioning to WAITING_FOR_SPIN. Waiting for user to spread arms.`);
                 currentState = AppState.WAITING_FOR_SPIN;
                 
                 // Switch pose detection to "spread_arms" to trigger material change
                 if (mocap) {
                     mocap.activePoseKey = 'spread_arms';
                     mocap.matchStartTime = null;
-                    mocap.isPoseTriggerMode = true; // Re-enable detection!
+                    mocap.isPoseTriggerMode = true; // Enable gesture detection
                 }
             };
             
@@ -1112,12 +1118,15 @@
             } catch (e) {
                 console.error("[State Machine] Play failed:", e);
             }
-            // Video finished, wait for spread arms
             console.log(`[State Machine] Dance video ended. Paused at end frame.`);
         }
 
         async function triggerSpinTransition() {
             currentState = AppState.SPIN_LOOPING;
+            if (mocap) {
+                mocap.isPoseTriggerMode = false; // Disable gesture trigger while video is playing
+                mocap.matchStartTime = null;
+            }
             
             const matchedId = window.matchedFigurineId || 'white';
             
@@ -1155,30 +1164,23 @@
                 
                 spinVideoIndex++;
                 
-                // Continuous Spin Logic: 
-                // As long as hands are not put down (isCurrentlySpreadingArms is true)
-                const isHolding = mocap && mocap.isCurrentlySpreadingArms;
+                // Pause at end frame, DO NOT AUTO-LOOP. Require user to perform spread arms gesture again!
+                console.log(`[State Machine] Material video finished and frozen on last frame. Waiting for next spread arms gesture.`);
+                currentState = AppState.WAITING_FOR_SPIN_RESUME;
                 
-                if (isHolding) {
-                    console.log(`[State Machine] Spin loop continues (Holding arms). Playing next.`);
-                    triggerSpinTransition(); // Play next
-                } else {
-                    console.log(`[State Machine] Hands down. Waiting 5s for resume.`);
-                    currentState = AppState.WAITING_FOR_SPIN_RESUME;
-                    
-                    if (mocap) {
-                        mocap.activePoseKey = 'spread_arms';
-                        mocap.matchStartTime = null;
-                        mocap.isPoseTriggerMode = true;
-                    }
-                    
-                    window.spinResumeTimer = setTimeout(() => {
-                        if (currentState === AppState.WAITING_FOR_SPIN_RESUME) {
-                            console.log(`[State Machine] 5s elapsed without raising hands. Triggering outro.`);
-                            playOutroVideo();
-                        }
-                    }, 5000);
+                if (mocap) {
+                    mocap.activePoseKey = 'spread_arms';
+                    mocap.matchStartTime = null;
+                    mocap.isPoseTriggerMode = true;
                 }
+                
+                // If user leaves or stays still for 8 seconds after transition, proceed to outro
+                window.spinResumeTimer = setTimeout(() => {
+                    if (currentState === AppState.WAITING_FOR_SPIN_RESUME) {
+                        console.log(`[State Machine] 8s elapsed without raising hands. Triggering outro.`);
+                        playOutroVideo();
+                    }
+                }, 8000);
             };
             
             try {
@@ -1186,7 +1188,7 @@
             } catch (e) {
                 console.error("[State Machine] Play failed:", e);
             }
-            console.log(`[State Machine] Spin video ${spinVideoIndex} ended. Evaluating next step.`);
+            console.log(`[State Machine] Spin video ${spinVideoIndex} ended. Paused on last frame.`);
         }
 
         /**
