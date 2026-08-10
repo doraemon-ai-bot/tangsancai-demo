@@ -283,7 +283,7 @@
                 </div>
                 
                 <!-- 3. Sancai Figurine Hologram Overlay (used for silhouette/hologram projection) -->
-                <img id="stageFigurineImg" class="absolute inset-0 w-full h-full object-contain select-none transition-all duration-700 z-10 opacity-0 filter drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" src="assets/images/card_white.png" alt="Tang Figurine Hologram" />
+                <img id="stageFigurineImg" class="absolute inset-0 w-full h-full object-contain select-none transition-opacity duration-500 z-10 opacity-0 pointer-events-none" src="assets/images/reveal_white_0s.jpg" alt="Tang Figurine Hologram" />
                 
                 <!-- 4. SVG Silhouette Overlay (for guiding pose, hidden in new flow but kept for structure) -->
                 <svg id="poseSilhouetteSVG" class="absolute inset-0 w-full h-full pointer-events-none opacity-0 select-none z-30 hidden" style="transform: scaleX(-1); transform-origin: center;" viewBox="0 0 320 320">
@@ -893,15 +893,44 @@
                 startOverlay.classList.add('opacity-0', 'pointer-events-none');
             }
             
-            const matchedId = window.matchedFigurineId || 'white';
-            const figurine = FIGURINES_DB[matchedId] || FIGURINES_DB['white'];
+            const matchedId = window.matchedFigurineId || 'black';
+            const figurine = FIGURINES_DB[matchedId] || FIGURINES_DB['black'] || FIGURINES_DB['white'];
             
             // Preload spin videos for this figurine immediately
             preloadSpinVideos(figurine.id);
 
-            // --- 阶段 2: 播放开幕拉帘视频 (video/curtain.mp4) ---
-            console.log(`[State Machine] Playing opening curtain: video/curtain.mp4`);
-            await playSeamlessVideo("video/curtain.mp4", false, 'normal');
+            // --- 阶段 2: 剪影第一帧图片叠在开幕拉帘视频 (curtain.mp4) 下面 ---
+            const stageImg = document.getElementById('stageFigurineImg');
+            if (stageImg) {
+                stageImg.src = figurine.reveal0sImage;
+                stageImg.classList.remove('opacity-0');
+                stageImg.classList.add('opacity-100');
+                stageImg.style.opacity = '1';
+                console.log(`[State Machine] Overlaying silhouette 0s image under curtain: ${figurine.reveal0sImage}`);
+            }
+
+            console.log(`[State Machine] Playing opening curtain over silhouette: video/curtain.mp4`);
+            const curtainOverlay = document.getElementById('curtainOverlayPlayer');
+            if (curtainOverlay) {
+                curtainOverlay.src = "video/curtain.mp4?v=20260810_fresh";
+                curtainOverlay.classList.remove('hidden');
+                curtainOverlay.style.mixBlendMode = 'screen';
+                curtainOverlay.style.opacity = '1';
+                try {
+                    await new Promise((resolve) => {
+                        curtainOverlay.onended = resolve;
+                        curtainOverlay.play().catch(e => {
+                            console.warn("curtain overlay play failed:", e);
+                            resolve();
+                        });
+                    });
+                } finally {
+                    curtainOverlay.classList.add('hidden');
+                    curtainOverlay.pause();
+                }
+            } else {
+                await playSeamlessVideo("video/curtain.mp4", false, 'normal');
+            }
             
             // --- 阶段 2b: 独立出场视频环节 (实时获取最新的识别颜色结果) ---
             const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
@@ -909,6 +938,11 @@
             console.log(`[State Machine] Curtain finished -> Playing reveal video: ${finalFigurine.revealVideo} (Color: ${finalFigurine.tags?.color || '白'})`);
             
             const showPromptCallback = () => {
+                if (stageImg) {
+                    stageImg.classList.remove('opacity-100');
+                    stageImg.classList.add('opacity-0');
+                    stageImg.style.opacity = '0';
+                }
                 console.log("[State Machine] Reveal video ended -> STANDBY_WAIT (Raise Left Hand Challenge)");
                 currentState = AppState.STANDBY_WAIT;
                 
