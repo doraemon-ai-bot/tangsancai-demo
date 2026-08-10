@@ -219,12 +219,12 @@
                 
                 <!-- Outro Refined Gold Blessing Display (State: OUTRO_VIDEO End) -->
                 <div id="outroBlessingOverlay" class="hidden absolute inset-x-0 bottom-20 z-40 flex items-center justify-center p-4 transition-all duration-700 opacity-0 pointer-events-none">
-                    <div class="px-8 py-3.5 rounded-2xl bg-neutral-950/80 backdrop-blur-xl border border-amber-400/40 shadow-[0_12px_40px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(245,158,11,0.3)] flex items-center justify-center gap-3">
-                        <span class="w-2.5 h-0.5 bg-amber-400/60 rounded-full"></span>
-                        <span id="outroBlessingText" class="text-base md:text-lg font-classical font-bold tracking-[0.35em] text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-amber-400 drop-shadow-[0_2px_10px_rgba(245,158,11,0.5)] whitespace-nowrap">
+                    <div class="px-8 py-3.5 rounded-2xl bg-neutral-950/85 backdrop-blur-xl border border-amber-400/50 shadow-[0_12px_40px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(245,158,11,0.3)] flex items-center justify-center gap-3">
+                        <span class="w-2.5 h-0.5 bg-amber-400/80 rounded-full"></span>
+                        <span id="outroBlessingText" class="text-base md:text-lg font-classical font-bold tracking-[0.35em] text-amber-200 drop-shadow-[0_2px_12px_rgba(245,158,11,0.8)] whitespace-nowrap">
                             一舞千年 · 余韵绕梁
                         </span>
-                        <span class="w-2.5 h-0.5 bg-amber-400/60 rounded-full"></span>
+                        <span class="w-2.5 h-0.5 bg-amber-400/80 rounded-full"></span>
                     </div>
                 </div>
                 
@@ -827,7 +827,7 @@
         }
 
         /**
-         * State 2: Plays Video 1 (Curtain opens -> Colored Figurine Reveal)
+         * State 2: Plays Video 1 (Curtain opens -> Silhouette revealed -> Colored Figurine Reveal)
          */
         async function startCinematicFlow() {
             if (currentState !== AppState.STANDBY_LOOP) return;
@@ -847,18 +847,61 @@
             // Preload spin videos for this figurine immediately
             preloadSpinVideos(figurine.id);
 
-            // --- 阶段 1: 播放开幕拉帘视频 (video/curtain.mp4) ---
-            // 待机闭幕（intro.mp4）直接无缝双缓冲交叉淡入开幕拉帘视频（curtain.mp4），
-            // 观众先看到闭合的大幕，随后大幕由中间向两侧缓缓拉开！
-            console.log(`[State Machine] Playing opening curtain seamlessly: video/curtain.mp4`);
-            await playSeamlessVideo("video/curtain.mp4", false, 'normal');
+            // --- 阶段 1: 剪影第一帧图片置于底层 (z-10)，但被上层闭合的大幕 (z-20) 遮挡 ---
+            const stageImg = document.getElementById('stageFigurineImg');
+            if (stageImg) {
+                stageImg.src = figurine.reveal0sImage;
+                stageImg.classList.remove('opacity-0');
+                stageImg.classList.add('opacity-100');
+                stageImg.style.opacity = '1';
+                console.log(`[State Machine] Staged silhouette 0s image under curtain: ${figurine.reveal0sImage}`);
+            }
+
+            // --- 阶段 2: 播放开幕拉帘视频 (curtain.mp4) ---
+            // 采用 screen 滤色模式叠加在剪影图之上，大幕两边拉开时，观众透过大幕缝隙看到底层的剪影舞台！
+            console.log(`[State Machine] Playing opening curtain with silhouette underneath: video/curtain.mp4`);
+            const curtainOverlay = document.getElementById('curtainOverlayPlayer');
+            const playerA = document.getElementById('videoPlayerA');
+            const playerB = document.getElementById('videoPlayerB');
             
-            // --- 阶段 2: 帘子拉开后，大屏无缝播放对应仕女出场显现视频 (reveal_{color}.mp4) ---
+            if (curtainOverlay) {
+                curtainOverlay.src = "video/curtain.mp4?v=20260810_fresh";
+                curtainOverlay.classList.remove('hidden');
+                curtainOverlay.style.mixBlendMode = 'screen';
+                curtainOverlay.style.opacity = '1';
+                
+                try {
+                    await new Promise((resolve) => {
+                        curtainOverlay.onended = resolve;
+                        curtainOverlay.onplaying = () => {
+                            // Once curtain starts moving, hide previous standby loop
+                            if (playerA) { playerA.pause(); playerA.classList.add('opacity-0'); }
+                            if (playerB) { playerB.pause(); playerB.classList.add('opacity-0'); }
+                        };
+                        curtainOverlay.play().catch(e => {
+                            console.warn("curtain overlay play failed:", e);
+                            resolve();
+                        });
+                    });
+                } finally {
+                    curtainOverlay.classList.add('hidden');
+                    curtainOverlay.pause();
+                }
+            } else {
+                await playSeamlessVideo("video/curtain.mp4", false, 'normal');
+            }
+            
+            // --- 阶段 3: 帘子拉开后，大屏无缝播放对应仕女出场显现视频 (reveal_{color}.mp4) ---
             const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
             const finalFigurine = FIGURINES_DB[finalMatchedId] || FIGURINES_DB['white'];
             console.log(`[State Machine] Curtain finished -> Playing reveal video: ${finalFigurine.revealVideo} (Color: ${finalFigurine.tags?.color || '白'})`);
             
             const showPromptCallback = () => {
+                if (stageImg) {
+                    stageImg.classList.remove('opacity-100');
+                    stageImg.classList.add('opacity-0');
+                    stageImg.style.opacity = '0';
+                }
                 console.log("[State Machine] Reveal video ended -> STANDBY_WAIT (Raise Left Hand Challenge)");
                 currentState = AppState.STANDBY_WAIT;
                 
