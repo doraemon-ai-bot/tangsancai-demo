@@ -242,7 +242,10 @@ class MotionCaptureEngine {
             return false;
         }
         const lm = results.poseLandmarks;
-        const keyIndices = [0, 11, 12, 23, 24]; // Nose, Left/Right Shoulder, Left/Right Hip
+        // Key landmarks: Left/Right Shoulder, Left/Right Hip
+        if (!lm[11] || !lm[12]) return false;
+        
+        const keyIndices = [11, 12, 23, 24]; // Shoulders and Hips
         let totalVis = 0;
         let count = 0;
         for (let idx of keyIndices) {
@@ -251,9 +254,12 @@ class MotionCaptureEngine {
                 count++;
             }
         }
-        if (count === 0) return true; // Fallback if visibility is not provided
+        if (count < 2) return false;
         const avgVis = totalVis / count;
-        return avgVis >= 0.55;
+        const shoulderDist = Math.abs(lm[11].x - lm[12].x);
+        
+        // Require shoulders to have high visibility and reasonable size in frame
+        return avgVis >= 0.65 && shoulderDist >= 0.08;
     }
 
     /**
