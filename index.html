@@ -1285,10 +1285,10 @@
                         if (lower.includes(kw)) return color;
                     }
                 }
-                return '白'; // Default fallback
+                return null; // DO NOT fallback to white if unrecognized!
             }
 
-            let bestColor = '白';
+            let bestColor = null;
             let minDistance = 999999;
 
             for (let color in colorDefinitions) {
@@ -1369,7 +1369,8 @@
                 const resJson = await response.json();
                 const text = resJson.candidates[0].content.parts[0].text;
                 console.log("[Color Classifier] Gemini Cloud output:", text);
-                return { mappedColor: mapDescriptionToColor(text), rawText: text };
+                const mapped = mapDescriptionToColor(text);
+                return mapped ? { mappedColor: mapped, rawText: text } : null;
             } else {
                 // Local Ollama path (supports gemma4, moondream, etc.)
                 const endpoint = document.getElementById('apiEndpoint')?.value || 'http://localhost:11434';
@@ -1377,7 +1378,7 @@
                 // HTTPS Mixed Content Guard: Browser blocks http://localhost from https:// Pages
                 if (window.location.protocol === 'https:' && endpoint.startsWith('http:')) {
                     console.log("[AI Match] HTTPS mixed content guard: local HTTP Ollama endpoint bypassed on static HTTPS host.");
-                    return { mappedColor: "白", rawText: "Static HTTPS Fallback" };
+                    return null;
                 }
                 
                 const cleanEndpoint = endpoint.replace(/\/v1\/?$/, '').replace(/\/$/, '');
@@ -1407,7 +1408,7 @@
                     stream: false,
                     options: {
                         temperature: 0.0,
-                        num_predict: 20
+                        num_predict: 50
                     }
                 };
                 
@@ -1422,7 +1423,8 @@
                 const resJson = await response.json();
                 const text = (resJson.response || resJson.message?.content || "").trim();
                 console.log(`[Color Classifier 🦙] Output from ${modelName}: "${text}"`);
-                return { mappedColor: mapDescriptionToColor(text), rawText: text };
+                const mapped = mapDescriptionToColor(text);
+                return mapped ? { mappedColor: mapped, rawText: text } : null;
             }
         }
 
@@ -1481,30 +1483,30 @@
                     }
                     const deg = hue * 360;
                     
-                    // Black: low brightness
-                    if (val < 0.28 || (val < 0.38 && sat < 0.40 && (r + g + b) < 200)) {
+                    // Black: Dark or low brightness (Webcam black shirts typically have val < 0.48, sat < 0.38)
+                    if (val < 0.48 && sat < 0.38) {
                         black++;
                     }
-                    // White: high brightness & low saturation
-                    else if (val > 0.72 && sat < 0.25) {
+                    // White: High brightness & low saturation
+                    else if (val > 0.65 && sat < 0.20) {
                         white++;
                     }
-                    // Gray: moderate brightness & low saturation
-                    else if (sat < 0.25 && val >= 0.28 && val <= 0.72) {
+                    // Gray: Moderate brightness & low saturation
+                    else if (sat < 0.20 && val >= 0.48 && val <= 0.65) {
                         gray++;
                     }
-                    // Red: hue near 0 / 360 with saturation
-                    else if ((deg <= 25 || deg >= 335) && sat >= 0.28) {
+                    // Red: Hue near 0 / 360 with saturation
+                    else if ((deg <= 25 || deg >= 335) && sat >= 0.25) {
                         red++;
                     }
-                    // Blue: hue 170-280 with saturation
+                    // Blue: Hue 170-280 with saturation
                     else if ((deg >= 170 && deg <= 280) && sat >= 0.25) {
                         blue++;
                     }
                     // Fallback
                     else if (r > g + 25 && r > b + 25) red++;
                     else if (b > r + 20 && b > g + 20) blue++;
-                    else if (val < 0.4) black++;
+                    else if (val < 0.50) black++;
                     else gray++;
                 }
                 
@@ -1520,7 +1522,7 @@
                 return scores[0].c;
             } catch(e) {
                 console.warn("Pixel color detect error:", e);
-                return '白';
+                return '黑';
             }
         }
 
