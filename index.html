@@ -1049,10 +1049,10 @@
                     blessingOverlay.classList.add('opacity-100');
                 }
 
-                // 2. Start closing curtain video AT THE EXACT LAST 1.0 SECOND of the outro video!
-                if (remaining <= 1.0 && !curtainTriggered) {
+                // 2. Start closing curtain video AT THE EXACT LAST 1.8 SECONDS of the outro video!
+                if (remaining <= 1.8 && !curtainTriggered) {
                     curtainTriggered = true;
-                    console.log(`[State Machine] Outro video last 1s -> Seamlessly closing blue curtain...`);
+                    console.log(`[State Machine] Outro video last 1.8s -> Seamlessly closing blue curtain...`);
                     closeCurtainOverlay();
                 }
             };
