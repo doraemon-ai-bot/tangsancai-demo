@@ -960,6 +960,25 @@
                     mocap.activePoseKey = finalFigurine ? finalFigurine.poseKey : 'optimal_1';
                     mocap.matchStartTime = null;
                 }
+
+                // IF USER IS ALREADY STILL (OR ABSENT), AUTO-PROCEED TO OUTRO!
+                if (mocap && (mocap.isStill || mocap.isAbsent)) {
+                    console.log("[State Machine] User is already still/absent upon entering STANDBY_WAIT -> Starting OUTRO_VIDEO in 1.5s...");
+                    setTimeout(() => {
+                        if (currentState === AppState.STANDBY_WAIT) {
+                            playOutroVideo();
+                        }
+                    }, 1500);
+                } else {
+                    // Fallback safety timeout: If user doesn't raise hand or move within 6 seconds, auto-proceed to OUTRO_VIDEO!
+                    if (window.idleOutroTimer) clearTimeout(window.idleOutroTimer);
+                    window.idleOutroTimer = setTimeout(() => {
+                        if (currentState === AppState.STANDBY_WAIT || currentState === AppState.WAITING_FOR_SPIN) {
+                            console.log("[State Machine] Idle 6s timeout in challenge state -> Auto-starting OUTRO_VIDEO...");
+                            playOutroVideo();
+                        }
+                    }, 6000);
+                }
             };
             
             try {
