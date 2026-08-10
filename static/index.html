@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="luxury">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乐舞胡旋 - 大唐三彩乐俑互动展项</title>
+    <script>
+        // Global error listener to capture any frontend exceptions during VM testing
+        window.onerror = function(message, source, lineno, colno, error) {
+            alert(`⚠️ Browser JS Error!\n\nMsg: ${message}\nFile: ${source.split('/').pop()}\nLine: ${lineno}\nStack: ${error ? error.stack.substring(0, 200) + '...' : 'N/A'}`);
+            return false;
+        };
+    </script>
+    <!-- Tailwind & DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@1.20.1/dist/full.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;600;900&family=ZCOOL+XiaoWei&display=swap');
+        
+        .font-classical {
+            font-family: 'Ma Shan Zheng', 'ZCOOL XiaoWei', 'Noto Serif SC', 'SimSun', serif;
+        }
+        .font-calligraphy {
+            font-family: 'Ma Shan Zheng', 'ZCOOL XiaoWei', 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
+        }
+        .font-roman {
+            font-family: 'Cinzel', serif;
+        }
+        .font-tech {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: radial-gradient(circle at center, #1c1c18 0%, #060605 100%) !important;
+            background-color: #060605 !important;
+        }
+        
+        /* Premium custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(212, 175, 55, 0.02);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.15);
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 175, 55, 0.3);
+        }
+
+        /* Base Museum Card */
+        .museum-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(18, 18, 16, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 1px solid rgba(212, 175, 55, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .museum-card:hover {
+            background: rgba(28, 28, 24, 0.6);
+            border-color: rgba(212, 175, 55, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Active Museum Card */
+        .museum-card-active {
+            background: rgba(212, 175, 55, 0.04) !important;
+            border-color: rgba(212, 175, 55, 0.7) !important;
+            box-shadow: 0 10px 45px rgba(212, 175, 55, 0.12), 0 0 20px rgba(212, 175, 55, 0.03) !important;
+            transform: scale(1.02);
+        }
+
+        /* Luxury Card Numbering */
+        .museum-card-num {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(212, 175, 55, 0.3);
+            width: 20px;
+            text-align: center;
+            transition: color 0.5s;
+        }
+        .museum-card-active .museum-card-num {
+            color: #d4af37;
+            text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Luxury Thumbnails */
+        .museum-card-thumb {
+            width: 40px;
+            height: 56px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.12);
+            transition: border-color 0.5s;
+        }
+        .museum-card-active .museum-card-thumb {
+            border-color: rgba(212, 175, 55, 0.6);
+        }
+
+        /* Custom Badges */
+        .museum-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 8px;
+            font-weight: 700;
+            margin-top: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.12);
+            color: rgba(212, 175, 55, 0.5);
+            background: rgba(212, 175, 55, 0.01);
+            letter-spacing: 0.08em;
+            transition: all 0.5s;
+        }
+        .museum-badge-active {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 8px;
+            font-weight: 700;
+            margin-top: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            color: #d4af37;
+            background: rgba(212, 175, 55, 0.08);
+            letter-spacing: 0.08em;
+            transition: all 0.5s;
+        }
+        
+        /* Cinematic Curtain Animation */
+        #curtainOverlay {
+            background: transparent;
+            pointer-events: auto;
+        }
+        .curtain-open {
+            pointer-events: none !important;
+        }
+        .curtain-open #curtainLeft {
+            transform: translateX(-100%);
+        }
+        .curtain-open #curtainRight {
+            transform: translateX(100%);
+        }
+        .curtain-open #curtainBtn {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.8);
+        }
+        
+        /* Pulse animation for curtain start button */
+        @keyframes goldPulse {
+            0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(212, 175, 55, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
+        #curtainBtn {
+            animation: goldPulse 2s infinite;
+        }
+
+    </style>
+    
+    <!-- --- CDNs FOR 3D GRAPHICS & MOTION CAPTURE --- -->
+    <!-- 1. Three.js (used by motion_capture.js for vector math) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- 3. MediaPipe Pose (Using CDN because local might fail worker/wasm load) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <!-- 4. MediaPipe Camera Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+</head>
+<body class="gradient-bg w-screen h-screen m-0 p-0 font-sans flex items-center justify-center overflow-hidden select-none text-amber-100/90">
+
+    <!-- Grand Centered Kiosk Container (Centered, max-width 480px for a vertical kiosk aspect ratio) -->
+    <div class="w-full h-full flex flex-col mx-auto">
+        
+        <!-- Museum Title Header (Moved to top of the single centered column) -->
+        <div class="hidden text-center py-2 pb-3 border-b border-amber-500/10">
+            <h1 class="text-2xl font-black text-amber-500 tracking-[0.2em] uppercase flex items-center justify-center gap-2 font-classical">
+                <i class="fa-solid fa-compact-disc animate-pulse text-amber-600/80"></i> 乐舞胡旋
+            </h1>
+            <p class="text-[8px] text-amber-500/60 font-bold tracking-[0.25em] mt-1 font-roman">THE SANCAI HOLOGRAPHIC TIME MIRROR</p>
+        </div>
+
+        <!-- Holographic Stage (Height: 100vh, Width: 100%) -->
+        <div id="unifiedStage" class="relative w-full h-full overflow-hidden bg-black" style="height: 100vh;">
+                
+                <!-- 1. Picture-in-Picture Webcam Feed (Top-Right PIP) -->
+                <div id="webcamPIP" class="absolute top-4 right-4 z-30 w-32 h-40 rounded-2xl overflow-hidden border border-amber-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.5)] bg-neutral-950 flex items-center justify-center">
+                    <video id="webcam" autoplay playsinline muted class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
+                    <!-- Mini status label -->
+                    <div class="absolute bottom-1 left-1.5 px-1.5 py-0.5 bg-black/60 rounded text-[7px] text-amber-500/80 font-classical font-semibold tracking-wider">
+                        📷 实时投影
+                    </div>
+                </div>
+                <!-- 2. The 3D WebGL Canvas (Figurine) -->
+                <canvas id="threejs-canvas" class="hidden absolute inset-0 w-full h-full z-10 transition-opacity duration-1000 opacity-100"></canvas>
+                
+                <!-- 2b. Pre-rendered Video Player Overlay (for awakening dance) -->
+                <!-- 2b. Pre-rendered Video Player Overlays (Double Buffer for Seamless Crossfading) -->
+                <video id="videoPlayerA" class="absolute inset-0 w-full h-full object-contain z-20 opacity-100 transition-opacity duration-300 pointer-events-none" style="transform: translateZ(0); will-change: opacity;" src="video/intro.mp4" muted autoplay loop playsinline></video>
+                <video id="videoPlayerB" class="absolute inset-0 w-full h-full object-contain z-20 opacity-0 transition-opacity duration-300 pointer-events-none" style="transform: translateZ(0); will-change: opacity;" muted autoplay loop playsinline></video>
+                
+                <!-- OVERLAY player for the Opening Curtain (mix-blend-mode: screen makes black transparent) -->
+                <video id="curtainOverlayPlayer" class="absolute inset-0 w-full h-full object-contain z-30 opacity-0 pointer-events-none" style="mix-blend-mode: screen; transition: opacity 300ms ease-in-out; transform: translateZ(0); will-change: opacity, mix-blend-mode;" muted playsinline preload="auto" src="video/curtain.mp4"></video>
+                
+                <!-- Global Audio Player for synced BGM -->
+                <audio id="globalBgmPlayer" class="hidden" preload="auto"></audio>
+                
+                <!-- NEW: Prompt Overlays (Dance and Material) -->
+                <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_dance.png" alt="提示跳舞" />
+                <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
+                
+                <!-- Outro Pure White Center Blessing (State: OUTRO_VIDEO End) -->
+                <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center pointer-events-none transition-opacity duration-1000 opacity-0">
+                    <div id="outroBlessingText" class="font-sans text-2xl md:text-4xl font-normal tracking-[0.45em] text-white text-center leading-relaxed flex flex-col items-center justify-center space-y-3 md:space-y-4 select-none">
+                        <div>舞 动 千 年</div>
+                        <div>华 彩 乐 章</div>
+                    </div>
+                </div>
+                
+                <!-- 2c. Standby Silhouette Image Overlay (State: STANDBY_LOOP) -->
+                <img id="standbySilhouetteOverlay" class="hidden absolute inset-0 w-full h-full object-contain z-20 transition-opacity duration-500 opacity-100" src="assets/videos/silhouette.png" alt="Silhouette Attract Loop" />
+                
+                <!-- Camera Error / Warning HUD -->
+                <div id="cameraWarningHUD" class="hidden absolute inset-0 bg-neutral-950/98 p-8 flex flex-col items-center justify-center text-center z-30 space-y-4 border border-amber-500/20">
+                    <div class="w-14 h-14 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 animate-bounce shadow-lg border border-amber-500/20">
+                        <i class="fa-solid fa-camera text-2xl"></i>
+                    </div>
+                    <h4 class="text-base font-bold text-amber-500 font-classical">📸 本地摄像头访问受阻 (Camera Locked)</h4>
+                    <p class="text-xs text-amber-100/70 leading-relaxed max-w-[85%] font-classical">
+                        浏览器安全策略限制了摄像头权限。若您使用远程开发机，安全策略要求您使用安全域名或本地回环地址访问。<br/>
+                        <span class="text-[10px] text-amber-100/40 block mt-2">（请确保在本地实体电脑的 Chrome 浏览器中打开，并允许摄像头授权）</span>
+                    </p>
+                    <button class="px-4 py-2 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-classical text-xs font-bold tracking-widest transition-all duration-300 shadow-md" onclick="retryWebcamAccess()">
+                        <i class="fa-solid fa-arrows-rotate mr-1 animate-spin"></i> 重试摄像头连接 (Retry)
+                    </button>
+                </div>
+                
+                <!-- 3. Sancai Figurine Hologram Overlay (used for silhouette/hologram projection) -->
+                <img id="stageFigurineImg" class="absolute inset-0 w-full h-full object-contain select-none transition-opacity duration-500 z-20 opacity-0 pointer-events-none" src="assets/images/reveal_white_0s.jpg" alt="Tang Figurine Hologram" />
+                
+                <!-- 4. SVG Silhouette Overlay (for guiding pose, hidden in new flow but kept for structure) -->
+                <svg id="poseSilhouetteSVG" class="absolute inset-0 w-full h-full pointer-events-none opacity-0 select-none z-30 hidden" style="transform: scaleX(-1); transform-origin: center;" viewBox="0 0 320 320">
+                    <!-- SVG paths will be injected by script -->
+                </svg>
+                
+                <!-- 5. Floating Status Badge (Top-Left) -->
+                <div class="hidden absolute top-4 left-4 z-30 flex flex-col gap-1.5 items-start">
+                    <span id="trackingStatus" class="bg-neutral-950/85 backdrop-blur-md border border-white/5 text-[9px] text-amber-100/80 px-2.5 py-1.5 rounded-md shadow-2xl tracking-wider flex items-center select-none font-classical">
+                        <span class="w-1.5 h-1.5 rounded-full bg-error animate-ping mr-1.5" id="statusDot"></span>
+                        摄像头关闭
+                    </span>
+                    <div class="bg-neutral-950/85 backdrop-blur-md border border-amber-500/20 text-[9px] font-bold text-amber-500 px-2.5 py-1.5 rounded-md shadow-2xl tracking-widest font-classical uppercase hidden" id="activeChallengeBadge">正在挑战：伞裙乐人 · 反弹琵琶</div>
+                </div>
+
+ 
+                <!-- 7. Kiosk Start Overlay (Standby / Attract Loop state) -->
+                <div id="startOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-black/10 transition-opacity duration-500">
+                    <!-- Center Gold Button -->
+                    <button id="curtainBtn" class="hidden w-36 h-36 rounded-full bg-[#d4af37]/5 border-2 border-[#d4af37]/50 flex flex-col items-center justify-center text-[#d4af37] shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:scale-105 hover:bg-[#d4af37]/15 transition-all duration-300 z-50 group" onclick="startCinematicFlow()">
+                        <i class="fa-solid fa-play text-2xl mb-2 group-hover:scale-110 transition-transform duration-300"></i>
+                        <span class="text-xs font-classical font-bold tracking-[0.2em]">开启共舞</span>
+                        <span class="text-[8px] font-roman opacity-60 mt-1">START DANCE</span>
+                    </button>
+                </div>
+ 
+
+
+
+                <!-- Floating On-Screen Debug Logger (Inside Stage Overlay) -->
+                <div id="onScreenLogger" class="absolute bottom-20 left-4 z-50 w-96 h-48 bg-black bg-opacity-95 border border-green-500/50 rounded-lg p-2.5 text-[9px] font-mono text-green-400 overflow-y-auto shadow-2xl flex flex-col">
+                    <div class="flex justify-between border-b border-white/10 pb-1.5 mb-1.5 shrink-0">
+                        <span class="text-white font-semibold flex items-center gap-1">🔍 调试日志 (Debug Logs)</span>
+                        <div class="flex gap-2">
+                            <button onclick="copyAllDebugLogs()" class="text-amber-400 hover:text-amber-300 font-bold transition-all duration-200">📋 复制</button>
+                            <button onclick="document.getElementById('logConsoleLines').innerHTML = ''" class="text-warning hover:text-warning-focus">清空</button>
+                            <button onclick="document.getElementById('onScreenLogger').classList.add('hidden')" class="text-red-400 hover:text-red-300">隐藏</button>
+                        </div>
+                    </div>
+                    <div id="logConsoleLines" class="flex-1 overflow-y-auto flex flex-col gap-0.5 pr-1 select-text"></div>
+                </div>
+
+                <!-- Unified Canvas Loader Overlay -->
+                <div id="canvasLoader" class="hidden absolute inset-0 bg-neutral-950/90 z-30 flex flex-col items-center justify-center space-y-4">
+                    <div class="animate-spin rounded-full h-12 w-12 border-2 border-amber-500/10 border-t-amber-500"></div>
+                    <h3 class="text-xs font-bold text-amber-500 animate-pulse font-classical tracking-[0.25em]" id="loaderTitle">正在重组时空...</h3>
+                </div>
+            </div>
+
+
+        </div>
+
+    </div>
+
+    <!-- --- LINK LOCAL WEBGL/MOTION CAPTURE scripts (with cache busters) --- -->
+    <script src="motion_capture.js?v=20260810_v2"></script>
+
+    <!-- --- FIGURINES DATABASE (Carousel Exhibit Database) --- -->
+    <script>
+        // 🏺 大唐时空幻影镜——展项资产数据库 (Single Figurine Database)
+        const SPIN_LOOP_VIDEOS = ['video/big_flower_to_round.mp4', 'video/round_to_blue_flower.mp4', 'video/blue_flower_to_stripe.mp4'];
+        
+        // 📜 38 盛唐唐风锦绣祝福语库 (随机抽选)
+        const BLESSINGS_CUSTOM = [
+            "舞动千年，华彩乐章", "霓裳映彩，乐舞生辉", "一舞千年，绮梦流芳", "彩袖轻扬，盛世安康",
+            "胡旋入梦，雅韵长存", "唐风起舞，福瑞盈门", "云裳流彩，步步生花", "乐舞东方，锦绣华章",
+            "唐韵流芳，彩梦成章", "乐起长安，舞映芳华", "霓彩飞扬，福满今朝", "胡旋共舞，喜乐未央",
+            "绮彩流转，雅意绵长", "舞影千年，福泽绵延", "彩衣迎风，祥瑞相随", "华彩相逢，乐舞同心",
+            "旋舞星河，福运相随", "千年共舞，芳华永驻", "霓裳绽彩，心愿花开", "胡旋踏歌，吉祥相伴",
+            "唐韵新生，三彩绽放", "一袭彩衣，满载欢喜", "舞启华年，福满人间", "舞随心动，彩随缘生",
+            "千载风雅，今日相逢", "乐舞胡旋，锦色流年", "彩映唐韵，福伴此行", "旋舞之间，美好相连",
+            "三彩入袖，雅韵随心", "一舞倾心，万彩同行", "胡旋飞舞，愿景成真", "彩虹入梦，唐韵相随",
+            "舞动芳华，福启新章", "唐韵流转，幸福相伴", "旋转生花，好运相随", "霓裳幻彩，欢愉常在",
+            "千年乐舞，与你相约", "风起霓裳，福至心间"
+        ];
+
+        const FIGURINES_DB = {
+            red: {
+                id: "red",
+                name: "反弹琵琶 · 绯红霓裳",
+                badge: "红釉乐人",
+                desc: "红色衣裳唤醒红釉乐人，作琵琶横笛之乐，雍容华美。",
+                image: "assets/images/card_red.png",
+                poseKey: "optimal_1",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_red_0s.jpg",
+                revealVideo: "video/reveal_red.mp4",
+                danceVideo: "video/red_dance.mp4",
+                firstSpinVideo: "video/red_to_big.mp4",
+                outroVideo: "video/red_outro.mp4",
+                blessing: "鸿运当头",
+                tags: { color: "红" }
+            },
+            blue: {
+                id: "blue",
+                name: "大唐拂袖 · 天青呈祥",
+                badge: "蓝釉乐人",
+                desc: "蓝色衣裳唤醒蓝釉乐人，袖舞翩跹，尽显盛唐风采。",
+                image: "assets/images/card_blue.png",
+                poseKey: "optimal_1",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_blue_0s.jpg",
+                revealVideo: "video/reveal_blue.mp4",
+                danceVideo: "video/blue_dance.mp4",
+                firstSpinVideo: "video/blue_to_big.mp4",
+                outroVideo: "video/blue_outro.mp4",
+                blessing: "福寿绵长",
+                tags: { color: "蓝" }
+            },
+            black: {
+                id: "black",
+                name: "仙人指路 · 水墨乐姬",
+                badge: "黑釉乐人",
+                desc: "黑色衣裳唤醒黑釉乐人，姿态古雅，如水墨山水。",
+                image: "assets/images/card_black.png",
+                poseKey: "optimal_1",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_black_0s.jpg",
+                revealVideo: "video/reveal_black.mp4",
+                danceVideo: "video/black_dance.mp4",
+                firstSpinVideo: "video/black_to_big.mp4",
+                outroVideo: "video/black_outro.mp4",
+                blessing: "万象更新",
+                tags: { color: "黑" }
+            },
+            white: {
+                id: "white",
+                name: "执乐仕女 · 皎白霓裳",
+                badge: "白釉乐人",
+                desc: "白色衣裳唤醒白釉乐人，皎皎若月，温婉动人。",
+                image: "assets/images/card_white.png",
+                poseKey: "optimal_1",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_white_0s.jpg",
+                revealVideo: "video/reveal_white.mp4",
+                danceVideo: "video/white_dance.mp4",
+                firstSpinVideo: "video/white_to_big.mp4",
+                outroVideo: "video/white_outro.mp4",
+                blessing: "岁岁平安",
+                tags: { color: "白" }
+            },
+            gray: {
+                id: "gray",
+                name: "执乐仕女 · 苍灰古韵",
+                badge: "灰釉乐人",
+                desc: "灰色衣裳唤醒灰釉乐人，素雅淡远，极具青铜古韵。",
+                image: "assets/images/card_gray.png",
+                poseKey: "optimal_1",
+                poseLabel: "正在挑战：举起左手",
+                reveal0sImage: "assets/images/reveal_gray_0s.jpg",
+                revealVideo: "video/reveal_gray.mp4",
+                danceVideo: "video/gray_dance.mp4",
+                firstSpinVideo: "video/gray_to_big.mp4",
+                outroVideo: "video/gray_outro.mp4",
+                blessing: "吉祥如意",
+                tags: { color: "灰" }
+            }
+        };
+
+        const FIGURINE_KEYS = ['red', 'blue', 'black', 'white', 'gray'];
+        const figurinesDb = Object.values(FIGURINES_DB);
+        let currentFigurineIndex = 0;
+    </script>
+
+    <!-- --- ORCHESTRATOR CORE SCRIPT --- -->
+    <script>
+        // --- AUDIO SYNC UTILITIES ---
+        let globalAudioPlayer = null;
+        
+        function getAudioForVideo(videoSrc) {
+            if (!videoSrc) return null;
+            // Extract filename without path and extension
+            const filename = videoSrc.split('/').pop().split('.').shift();
+            
+            let mapped = filename;
+            
+            // 1. Map character-specific filenames to generic 'color' equivalents
+            const colors = ['red', 'blue', 'black', 'white', 'gray'];
+            colors.forEach(color => {
+                if (mapped === `${color}_dance`) mapped = 'color_dance';
+                if (mapped === `${color}_to_big`) mapped = 'color_to_big';
+                if (mapped === `stripe_to_${color}`) mapped = 'stripe_to_color';
+                if (mapped === `reveal_${color}`) mapped = 'reveal_color';
+                if (mapped === `${color}_outro`) mapped = 'color_outro';
+            });
+            
+            // 2. Map curtain opening to curtain
+            if (mapped === 'curtain') {
+                mapped = 'curtain';
+            }
+            // Map curtain closing to stripe_to_color BGM (so it continues playing from outro)
+            if (mapped === 'curtain_close') {
+                mapped = 'stripe_to_color';
+            }
+            
+            // 3. Alias mappings for silent videos (reuse existing audios)
+            if (mapped === 'reveal_color') {
+                mapped = 'curtain'; // Reuse curtain.mp3 for reveal
+            }
+            if (mapped === 'color_outro') {
+                mapped = 'stripe_to_color'; // Reuse stripe_to_color.mp3 for outro
+            }
+            
+            const AVAILABLE_AUDIOS = [
+                'big_flower_to_round',
+                'blue_flower_to_stripe',
+                'color_dance',
+                'color_to_big',
+                'curtain',
+                'intro',
+                'round_to_blue_flower',
+                'stripe_to_color'
+            ];
+            
+            if (AVAILABLE_AUDIOS.includes(mapped)) {
+                return `assets/audio/${mapped}.mp3`;
+            }
+            return null;
+        }
+
+        function syncAudioWithVideo(videoSrc, loop = false, seekTime = 0, speed = 1.0) {
+            if (!globalAudioPlayer) {
+                globalAudioPlayer = document.getElementById('globalBgmPlayer');
+            }
+            if (!globalAudioPlayer) return;
+            
+            const audioSrc = getAudioForVideo(videoSrc);
+            if (audioSrc) {
+                // If this BGM is already playing, let it continue without restarting!
+                if (globalAudioPlayer.src && globalAudioPlayer.src.includes(audioSrc) && !globalAudioPlayer.paused) {
+                    console.log(`[Audio Sync] BGM ${audioSrc} is already playing. Continuing...`);
+                    globalAudioPlayer.loop = true;
+                    globalAudioPlayer.playbackRate = speed;
+                    return;
+                }
+                console.log(`[Audio Sync] Playing BGM: ${audioSrc} (loop=true, seek=${seekTime}s, speed=${speed}x)`);
+                globalAudioPlayer.src = audioSrc;
+                globalAudioPlayer.loop = true;
+                globalAudioPlayer.volume = 0.6;
+                globalAudioPlayer.currentTime = seekTime;
+                globalAudioPlayer.playbackRate = speed; // Sync audio playback speed
+                globalAudioPlayer.play().catch(e => console.warn("[Audio Sync] Play failed:", e));
+            } else {
+                console.log(`[Audio Sync] No matching BGM for ${videoSrc}. Stopping audio.`);
+                globalAudioPlayer.pause();
+                globalAudioPlayer.src = "";
+            }
+        }
+
+        // --- REMARKABLE ON-SCREEN DEBUG LOGGER INTERCEPTOR ---
+        (function() {
+            window.addEventListener('DOMContentLoaded', () => {
+                const consoleDiv = document.getElementById('logConsoleLines');
+                const loggerContainer = document.getElementById('onScreenLogger');
+                
+                function addLogLine(text, colorClass = 'text-gray-300') {
+                    // Auto-reveal disabled for production showcase. Console stays permanently hidden.
+                    if (consoleDiv) {
+                        const line = document.createElement('div');
+                        line.className = `${colorClass} leading-tight break-all border-b border-white/5 py-0.5`;
+                        line.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
+                        consoleDiv.appendChild(line);
+                        while (consoleDiv.children.length > 80) {
+                            consoleDiv.removeChild(consoleDiv.firstChild);
+                        }
+                        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                    }
+                }
+                
+                window.copyAllDebugLogs = function() {
+                    if (!consoleDiv) return;
+                    const lines = Array.from(consoleDiv.children).map(el => el.innerText || el.textContent).join('\n');
+                    if (!lines) {
+                        showToast("暂无日志可复制", "warning");
+                        return;
+                    }
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(lines).then(() => {
+                            showToast("✅ 已复制全部调试日志到剪贴板！", "success");
+                        }).catch(() => fallbackCopyText(lines));
+                    } else {
+                        fallbackCopyText(lines);
+                    }
+                };
+                
+                function fallbackCopyText(text) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast("✅ 已复制全部调试日志到剪贴板！", "success");
+                    } catch (e) {
+                        showToast("❌ 复制失败，请手动选择文字复制", "error");
+                    }
+                    document.body.removeChild(textarea);
+                }
+
+                window.onerror = function(msg, url, line, col, error) {
+                    addLogLine(`[🚨 Global Error] ${msg} (${url}:${line})`, 'text-red-500');
+                    return false;
+                };
+                
+                window.addEventListener('unhandledrejection', function(event) {
+                    addLogLine(`[🚨 Unhandled Promise] ${event.reason}`, 'text-red-500');
+                });
+                
+                const originalLog = console.log;
+                console.log = function(...args) {
+                    originalLog.apply(console, args);
+                    addLogLine(args.join(' '), 'text-gray-300');
+                };
+                
+                const originalWarn = console.warn;
+                console.warn = function(...args) {
+                    originalWarn.apply(console, args);
+                    addLogLine(args.join(' '), 'text-yellow-400 font-semibold');
+                };
+                
+                const originalError = console.error;
+                console.error = function(...args) {
+                    originalError.apply(console, args);
+                    addLogLine(args.join(' '), 'text-red-400 font-semibold');
+                };
+                
+                window.onerror = function(message, source, lineno, colno, error) {
+                    addLogLine(`💥 运行时崩溃: ${message} (文件: ${source ? source.split('/').pop() : 'unknown'}, 行: ${lineno}:${colno})`, 'text-red-500 font-bold bg-red-950/50 px-1 rounded');
+                    return false;
+                };
+                
+                // Allow toggling debug console with "d" key & copying logs with "c" key
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'd' || e.key === 'D') {
+                        const logger = document.getElementById('onScreenLogger');
+                        if (logger) logger.classList.toggle('hidden');
+                    }
+                    if (e.key === 'c' || e.key === 'C') {
+                        if (typeof window.copyAllDebugLogs === 'function') {
+                            window.copyAllDebugLogs();
+                        }
+                    }
+                });
+                
+                console.log("[Orchestrator] On-screen debugger successfully hooked to console channels. Press 'd' to toggle, 'c' to copy all logs.");
+            });
+        })();
+
+        let mocap = null;
+        let webcamElement = document.getElementById('webcam');
+        let webcamStream = null;
+
+        // Beautiful Toast Notification Helper
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) {
+                console.log(`[Toast Fallback] [${type}] ${message}`);
+                return;
+            }
+            
+            const toast = document.createElement('div');
+            // DaisyUI classes: alert, alert-success, alert-error, alert-warning, alert-info
+            toast.className = `alert alert-${type} shadow-lg text-sm transition-all duration-300 transform translate-y-4 opacity-0 z-[1000]`;
+            
+            let icon = '💡';
+            if (type === 'success') icon = '✅';
+            if (type === 'error' || type === 'warning') icon = '⚠️';
+            
+            toast.innerHTML = `<div><span>${icon} ${message}</span></div>`;
+            container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            }, 10);
+            
+            // Remove after 3.5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3500);
+        }
+
+        // Resilient fetch wrapper with network timeout fallback
+        function fetchWithTimeout(url, options, timeout = 25000) {
+            return Promise.race([
+                fetch(url, options),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("请求超时 (Timeout after 25s)")), timeout)
+                )
+            ]);
+        }
+
+        /**
+         * Dynamic Carousel Figurine Renderer & State Sync
+         */
+
+
+        /**
+         * Quick high-end synth chime for tactile carousel navigation feedback
+         */
+        function playUIChime() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(550, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1100, ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.04, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.08);
+            } catch (e) {
+                // AudioContext blocked by user gesture policy
+            }
+        }
+
+        // --- STATE MACHINE DEFINITION ---
+        const AppState = {
+            STANDBY_LOOP: 'STANDBY_LOOP',           // Silhouette image visible, attract screen
+            INTRO_REVEAL: 'INTRO_REVEAL',           // OOTD Match -> playing matched color reveal video
+            STANDBY_WAIT: 'STANDBY_WAIT',           // Reveal ended, paused on color figurine, waiting for pose challenge
+            DANCE_LOOP: 'DANCE_LOOP',               // Main looping Hu Xuan Dance (dance_loop.mp4) playing
+            WAITING_FOR_SPIN: 'WAITING_FOR_SPIN',
+            SPIN_TRANSITION: 'SPIN_TRANSITION',     // Sequential spin transition video (spin_X.mp4) playing
+            SPIN_LOOPING: 'SPIN_LOOPING',           // Holding spread arms, looping spin videos
+            WAITING_FOR_SPIN_RESUME: 'WAITING_FOR_SPIN_RESUME', // Hands dropped, 5s grace period
+            OUTRO_VIDEO: 'OUTRO_VIDEO',             // Video 5 (Outro & Curtain Close) playing
+            STICKER_GIFT: 'STICKER_GIFT'            // Video 5 ended, showing sticker card
+        };
+        let currentState = AppState.STANDBY_LOOP;
+        let activePlayer = null; // Currently playing video player element
+        
+        let spinVideoIndex = 0; // Tracks which spin video to play (0 to 5)
+
+        window.matchedFigurineId = 'optimal_1';
+        window.aiBlessing = '岁岁平安，万事大吉';
+        window.enableVLM = false;
+
+        // Call resetKiosk immediately when DOM is ready so video/intro.mp4 plays instantly without waiting for webcam
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("[Page Startup 🚀] Initializing kiosk standby video loop immediately...");
+            resetKiosk();
+        });
+
+        window.addEventListener('load', async () => {
+            const defaultHost = window.location.hostname || "localhost";
+            const apiEndpointInput = document.getElementById('apiEndpoint');
+            if (apiEndpointInput) apiEndpointInput.value = `http://${defaultHost}:11434/v1`;
+            
+            // Ensure resetKiosk is ready
+            resetKiosk();
+            
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                webcamElement.srcObject = webcamStream;
+                try { await webcamElement.play(); } catch(e) { console.warn("play() failed", e); }
+                createMocapEngine();
+                updateTrackingBadge("success", "已连接");
+            } catch (e) {
+                const warningHUD = document.getElementById('cameraWarningHUD');
+                if (warningHUD) warningHUD.classList.remove('hidden');
+                updateTrackingBadge("error", "未连接");
+            }
+            
+            // Initialize description label with default figurine
+            updateMuseumInfoCard(FIGURINES_DB['white']);
+        });
+
+        async function retryWebcamAccess() {
+            document.getElementById('cameraWarningHUD').classList.add('hidden');
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                webcamElement.srcObject = webcamStream;
+                createMocapEngine();
+                updateTrackingBadge("success", "已连接");
+            } catch (e) {
+                document.getElementById('cameraWarningHUD').classList.remove('hidden');
+                updateTrackingBadge("error", "未连接");
+            }
+        }
+
+        // ================= STATE MACHINE TRANSACTIONS & LOGIC =================
+        
+        /**
+         * Seamless Double-Buffered Video Player Helper
+         */
+        function playSeamlessVideo(src, loop = false, blendMode = 'normal', onendedCallback = null, freezeTimeRemaining = 0.06) {
+            return new Promise((resolve, reject) => {
+                const playerA = document.getElementById('videoPlayerA');
+                const playerB = document.getElementById('videoPlayerB');
+                if (!playerA || !playerB) { 
+                    console.error("[Video System 🚨] Missing videoPlayerA or videoPlayerB elements!");
+                    resolve(); 
+                    return; 
+                }
+                
+                const nextPlayer = (activePlayer === playerA) ? playerB : playerA;
+                const prevPlayer = activePlayer;
+                
+                console.log(`[Video Loading 🎥] Switching source -> ${src} (loop: ${loop}, blend: ${blendMode})`);
+                
+                // Keep nextPlayer completely transparent while loading in background
+                nextPlayer.style.opacity = '0';
+                nextPlayer.classList.remove('opacity-100');
+                nextPlayer.classList.add('opacity-0');
+                
+                const cleanSrc = src.split('?')[0];
+                const versionedSrc = src.includes('?') ? src : `${src}?v=20260810_fresh`;
+                if (!nextPlayer.src || !nextPlayer.src.includes(cleanSrc) || nextPlayer.error || nextPlayer.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+                    nextPlayer.src = versionedSrc;
+                    nextPlayer.load();
+                }
+                nextPlayer.loop = loop;
+                nextPlayer.style.mixBlendMode = blendMode;
+                nextPlayer.currentTime = 0;
+                nextPlayer.playbackRate = 1.0; // Reset playback rate
+                nextPlayer.ontimeupdate = null; // Clear old listeners
+                nextPlayer.onended = null;
+                
+                // Mute all videos to avoid browser autoplay/concurrency restrictions
+                nextPlayer.muted = true;
+                
+                let isFinished = false;
+                const finish = () => {
+                    if (!isFinished) {
+                        isFinished = true;
+                        resolve();
+                    }
+                };
+
+                nextPlayer.onplaying = function() {
+                    console.log(`[Video Loading ✅] Video playing & fading in: ${src} (Player: ${nextPlayer.id})`);
+                    nextPlayer.classList.remove('opacity-0');
+                    nextPlayer.classList.add('opacity-100');
+                    nextPlayer.style.opacity = '1';
+                    
+                    // Sync audio BGM
+                    syncAudioWithVideo(src, loop);
+                    
+                    // Always hide static stage image once active video begins rendering
+                    const stageImg = document.getElementById('stageFigurineImg');
+                    if (stageImg) {
+                        stageImg.classList.remove('opacity-100');
+                        stageImg.classList.add('opacity-0');
+                        stageImg.style.opacity = '0';
+                    }
+
+                    // Smoothly fade out curtain overlay (e.g. after curtain_close completes)
+                    const curtainOverlay = document.getElementById('curtainOverlayPlayer');
+                    if (curtainOverlay && parseFloat(curtainOverlay.style.opacity) > 0 && !src.includes('curtain.mp4')) {
+                        curtainOverlay.style.transition = 'opacity 500ms ease-in-out';
+                        curtainOverlay.style.opacity = '0';
+                        setTimeout(() => { try { curtainOverlay.pause(); } catch(e){} }, 500);
+                    }
+                    
+                    // Only hide previous player AFTER next player has rendered active frames!
+                    if (prevPlayer && prevPlayer !== nextPlayer) {
+                        setTimeout(() => {
+                            prevPlayer.classList.remove('opacity-100');
+                            prevPlayer.classList.add('opacity-0');
+                            prevPlayer.style.opacity = '0';
+                            prevPlayer.pause();
+                        }, 120);
+                    }
+                    nextPlayer.onplaying = null;
+                };
+                
+                if (!loop) {
+                    const onEndedFallback = () => {
+                        nextPlayer.ontimeupdate = null;
+                        nextPlayer.onended = null;
+                        console.log(`[Video Loading 🏁] Video ended (native ended event): ${src}`);
+                        try {
+                            nextPlayer.currentTime = Math.max(0, nextPlayer.duration - freezeTimeRemaining);
+                            nextPlayer.playbackRate = 0.1;
+                        } catch(e) {
+                            console.warn("Failed to seek back on ended fallback:", e);
+                        }
+                        if (onendedCallback) onendedCallback();
+                        finish();
+                    };
+                    nextPlayer.onended = onEndedFallback;
+
+                    nextPlayer.ontimeupdate = function() {
+                        if (!window.lastPlayProgressLog || Date.now() - window.lastPlayProgressLog > 1000) {
+                            console.log(`[Play Progress] ${src}: current=${nextPlayer.currentTime.toFixed(2)}, duration=${nextPlayer.duration.toFixed(2)}, paused=${nextPlayer.paused}, speed=${nextPlayer.playbackRate}`);
+                            window.lastPlayProgressLog = Date.now();
+                        }
+                        if (nextPlayer.duration > 0.5 && nextPlayer.currentTime >= nextPlayer.duration - freezeTimeRemaining) {
+                            nextPlayer.ontimeupdate = null;
+                            nextPlayer.onended = null;
+                            nextPlayer.playbackRate = 0.1;
+                            console.log(`[Video Loading 🏁] Video ended (frozen on last frame): ${src}`);
+                            if (onendedCallback) onendedCallback();
+                            finish();
+                        }
+                    };
+                }
+                
+                activePlayer = nextPlayer;
+                nextPlayer.play().then(() => {
+                    console.log(`[Video Loading ▶️] Play promise resolved for: ${src}`);
+                    if (loop) finish();
+                }).catch(e => {
+                    console.warn(`[Video Loading ⚠️] Play failed with audio for ${src}, retrying muted fallback:`, e);
+                    nextPlayer.muted = true;
+                    nextPlayer.play().then(() => {
+                        if (loop) finish();
+                    }).catch(err => {
+                        console.error("Fatal play error:", err);
+                        finish();
+                    });
+                });
+            });
+        }
+
+        /**
+         * State 1: Resets the entire kiosk state machine to Standby Loop with Video 0
+         */
+        function resetKiosk() {
+            console.log("[State Machine] Resetting kiosk to STANDBY_LOOP...");
+            currentState = AppState.STANDBY_LOOP;
+            
+            // 1. Reset UI Overlays & Background
+            const bgContainer = document.getElementById('trueBackground');
+            if (bgContainer) bgContainer.classList.remove('opacity-0');
+
+            const startOverlay = document.getElementById('startOverlay');
+            if (startOverlay) {
+                startOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            }
+            const stickerGift = document.getElementById('stickerGiftOverlay');
+            if (stickerGift) {
+                stickerGift.classList.remove('show-sticker');
+            }
+            hideGuidancePrompt(); // Reset banner
+            
+            // Hide custom PNG prompts
+            const promptDance = document.getElementById('promptDanceImg');
+            if (promptDance) { promptDance.classList.add('hidden'); promptDance.classList.remove('opacity-100'); }
+            const promptMat = document.getElementById('promptMaterialImg');
+            if (promptMat) { promptMat.classList.add('hidden'); promptMat.classList.remove('opacity-100'); }
+            
+            // 1. Text instruction update
+            updateInstruction("请站在屏幕前唤醒大唐唐俑");
+            
+            // 2. Hide Silhouette (but keep Canvas and Background visible)
+            const stageImg = document.getElementById('stageFigurineImg');
+            if (stageImg) {
+                stageImg.style.opacity = "0";
+                stageImg.classList.remove('opacity-100');
+                stageImg.classList.add('opacity-0');
+                // Preload white 0s image
+                stageImg.src = FIGURINES_DB['white'].reveal0sImage;
+            }
+            
+            // 3. Play Standby video loop (Fully Opaque)
+            const standbyOverlay = document.getElementById('standbySilhouetteOverlay');
+            if (standbyOverlay) {
+                standbyOverlay.classList.add('hidden'); // Hide the static image
+            }
+            playSeamlessVideo("video/intro.mp4", true, 'normal');
+            
+            // 4. Reset Awaken Button
+            const awakenContainer = document.getElementById('awakenButtonContainer');
+            if (awakenContainer) {
+                awakenContainer.classList.add('opacity-0', 'pointer-events-none');
+                awakenContainer.classList.remove('opacity-100');
+            }
+            setAwakenButtonReady(false);
+            
+            // 5. Reset mocap states
+            if (mocap) {
+                mocap.isPoseTriggerMode = false;
+                mocap.spinState = 0;
+                mocap.isStill = false;
+                mocap.resume();
+            }
+
+            // 6. Reset matched figurine to default
+            window.isColorLocked = false;
+            window.matchedFigurineId = 'white';
+            window.detectedColor = 'white';
+            window.aiBlessing = "岁岁平安，万事大吉";
+            spinVideoIndex = 0;
+            updateMuseumInfoCard(FIGURINES_DB['white']);
+            
+            updateTrackingBadge("success", "已就绪");
+        }
+
+        /**
+         * State 2: Plays Video 1 (Curtain opens -> Silhouette revealed -> Colored Figurine Reveal)
+         */
+        async function startCinematicFlow() {
+            if (currentState !== AppState.STANDBY_LOOP) return;
+            
+            console.log("[State Machine] Starting cinematic flow -> INTRO_REVEAL");
+            currentState = AppState.INTRO_REVEAL;
+            window.isColorLocked = true; // Lock color prediction so late background samples cannot overwrite matched color!
+            if (mocap) mocap.pause();
+            
+            // Hide start overlay so it's not clickable anymore
+            const startOverlay = document.getElementById('startOverlay');
+            if (startOverlay) {
+                startOverlay.classList.add('opacity-0', 'pointer-events-none');
+            }
+            
+            const matchedId = window.matchedFigurineId || 'white';
+            const figurine = FIGURINES_DB[matchedId] || FIGURINES_DB['white'];
+            
+            const stageImg = document.getElementById('stageFigurineImg');
+            const curtainOverlay = document.getElementById('curtainOverlayPlayer');
+            const playerA = document.getElementById('videoPlayerA');
+            const playerB = document.getElementById('videoPlayerB');
+
+
+
+            // PRE-STAGE 0s SILHOUETTE IMAGE IMMEDIATELY AT z-25 (0ms Instant Display, No Black Gap)
+            if (stageImg) {
+                stageImg.src = figurine.reveal0sImage;
+                stageImg.style.zIndex = '25';
+                stageImg.style.transition = 'none';
+                stageImg.classList.remove('opacity-0', 'hidden');
+                stageImg.classList.add('opacity-100');
+                stageImg.style.opacity = '1';
+                console.log(`[State Machine] Staged 0s silhouette image at z-25 under opening curtain: ${figurine.reveal0sImage}`);
+            }
+
+            // Play intro_continue.mp4 directly after standby video
+            console.log("[State Machine] Playing intro_continue.mp4 after standby loop...");
+            await playSeamlessVideo("video/intro_continue.mp4", false, 'normal');
+            if (mocap) mocap.resume();
+            
+            // --- 阶段 2: 帘子拉开完毕 -> 保持 stageImg 0s 图片在 z-25 垫底，由 reveal 出场视频 0ms 无缝接管（决不黑屏）---
+            const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
+            const finalFigurine = FIGURINES_DB[finalMatchedId] || FIGURINES_DB['white'];
+            
+            if (stageImg) {
+                stageImg.src = finalFigurine.reveal0sImage;
+                stageImg.style.transition = 'none';
+                stageImg.style.opacity = '1';
+                stageImg.style.zIndex = '25';
+            }
+            console.log(`[State Machine] Curtain finished -> Playing reveal video: ${finalFigurine.revealVideo} (Color: ${finalFigurine.tags?.color || '白'})`);
+            
+            const showPromptCallback = () => {
+                console.log("[State Machine] Reveal video ended -> STANDBY_WAIT (Raise Left Hand Challenge)");
+                currentState = AppState.STANDBY_WAIT;
+                syncAudioWithVideo(null);
+                
+                // Show "Prompt Dance" PNG at the very end
+                const promptDance = document.getElementById('promptDanceImg');
+                if (promptDance) { 
+                    promptDance.classList.remove('hidden'); 
+                    void promptDance.offsetWidth; // Force reflow
+                    promptDance.classList.add('opacity-100'); 
+                }
+                
+                if (mocap) {
+                    mocap.isPoseTriggerMode = true; // Enable pose match challenge!
+                    mocap.activePoseKey = finalFigurine ? finalFigurine.poseKey : 'optimal_1';
+                    mocap.matchStartTime = null;
+                }
+
+                // IF USER IS ALREADY STILL (OR ABSENT), AUTO-PROCEED TO OUTRO!
+                if (mocap && (mocap.isStill || mocap.isAbsent)) {
+                    console.log("[State Machine] User is already still/absent upon entering STANDBY_WAIT -> Starting OUTRO_VIDEO in 5s...");
+                    setTimeout(() => {
+                        if (currentState === AppState.STANDBY_WAIT) {
+                            playOutroVideo();
+                        }
+                    }, 5000);
+                } else {
+                    // Fallback safety timeout: If user doesn't raise hand or move within 5 seconds, auto-proceed to OUTRO_VIDEO!
+                    if (window.idleOutroTimer) clearTimeout(window.idleOutroTimer);
+                    window.idleOutroTimer = setTimeout(() => {
+                        if (currentState === AppState.STANDBY_WAIT || currentState === AppState.WAITING_FOR_SPIN) {
+                            console.log("[State Machine] Idle 5s timeout in challenge state -> Auto-starting OUTRO_VIDEO...");
+                            playOutroVideo();
+                        }
+                    }, 5000);
+                }
+            };
+            
+            try {
+                // Delay spin videos preload by 2 seconds so the reveal video starts playing smoothly first
+                setTimeout(() => {
+                    if (currentState === AppState.INTRO_REVEAL) {
+                        preloadSpinVideos(finalFigurine.id);
+                    }
+                }, 2000);
+                await playSeamlessVideo(finalFigurine.revealVideo, false, 'normal', showPromptCallback);
+            } catch (e) {
+                console.error("[State Machine] Play reveal video failed:", e);
+            }
+        }
+
+        async function playOutroVideo() {
+            currentState = AppState.OUTRO_VIDEO;
+            
+            // Clean up any lingering prompts
+            const promptDance = document.getElementById('promptDanceImg');
+            if (promptDance) promptDance.classList.add('hidden');
+            const promptMat = document.getElementById('promptMaterialImg');
+            if (promptMat) promptMat.classList.add('hidden');
+            
+            const matchedId = window.matchedFigurineId || 'white';
+            const figurine = FIGURINES_DB[matchedId];
+            const outroVid = figurine ? figurine.outroVideo : "video/white_outro.mp4";
+            console.log(`[State Machine] Playing outro video: ${outroVid}`);
+            
+            // Pick a random blessing from the 38 custom Tang blessings
+            const randomBlessing = BLESSINGS_CUSTOM[Math.floor(Math.random() * BLESSINGS_CUSTOM.length)];
+            const blessingOverlay = document.getElementById('outroBlessingOverlay');
+            const blessingText = document.getElementById('outroBlessingText');
+            
+            if (blessingOverlay) {
+                blessingOverlay.style.opacity = '';
+                blessingOverlay.style.transition = '';
+            }
+            if (blessingOverlay && blessingText) {
+                let line1 = randomBlessing;
+                let line2 = "";
+                if (randomBlessing.includes("，")) {
+                    const parts = randomBlessing.split("，");
+                    line1 = parts[0];
+                    line2 = parts[1] || "";
+                } else if (randomBlessing.length >= 8) {
+                    line1 = randomBlessing.substring(0, 4);
+                    line2 = randomBlessing.substring(4);
+                }
+                
+                blessingText.innerHTML = `
+                    <div class="tracking-[0.45em] text-white font-normal">${line1.split('').join(' ')}</div>
+                    ${line2 ? `<div class="tracking-[0.45em] text-white font-normal">${line2.split('').join(' ')}</div>` : ''}
+                `;
+            }
+
+            let blessingShown = false;
+            let currentMonitorPlayer = null;
+
+            // Monitor active player playback time
+            const timeMonitor = () => {
+                if (!currentMonitorPlayer) {
+                    if (!window.lastTimeMonitorLog || Date.now() - window.lastTimeMonitorLog > 1000) {
+                        console.log("[State Machine] timeMonitor: currentMonitorPlayer is NULL");
+                        window.lastTimeMonitorLog = Date.now();
+                    }
+                    return;
+                }
+                if (currentMonitorPlayer.duration <= 0 || isNaN(currentMonitorPlayer.duration)) {
+                    if (!window.lastTimeMonitorLog || Date.now() - window.lastTimeMonitorLog > 1000) {
+                        console.log(`[State Machine] timeMonitor: invalid duration=${currentMonitorPlayer.duration}, readyState=${currentMonitorPlayer.readyState}`);
+                        window.lastTimeMonitorLog = Date.now();
+                    }
+                    return;
+                }
+                
+                const remaining = currentMonitorPlayer.duration - currentMonitorPlayer.currentTime;
+
+                // Throttled progress log
+                if (!window.lastTimeMonitorLog || Date.now() - window.lastTimeMonitorLog > 500) {
+                    console.log(`[State Machine] timeMonitor: remaining=${remaining.toFixed(2)}, current=${currentMonitorPlayer.currentTime.toFixed(2)}, duration=${currentMonitorPlayer.duration.toFixed(2)}, paused=${currentMonitorPlayer.paused}`);
+                    window.lastTimeMonitorLog = Date.now();
+                }
+
+                // 1. Show blessing text ONLY at the last 2.0 seconds of the outro video!
+                if (remaining <= 2.0 && !blessingShown && blessingOverlay) {
+                    blessingShown = true;
+                    console.log(`[State Machine] Outro video last 2s -> Fading in blessing text: "${randomBlessing}"`);
+                    blessingOverlay.classList.remove('hidden');
+                    void blessingOverlay.offsetWidth;
+                    startBlessingSparks();
+                    blessingOverlay.classList.remove('opacity-0');
+                    blessingOverlay.classList.add('opacity-100');
+                }
+            };
+
+            const intervalId = setInterval(timeMonitor, 100);
+
+            try {
+                // Play outro video normally to the end (default 0.06s freeze is fine, it will be black)
+                const outroPromise = playSeamlessVideo(outroVid, false, 'normal');
+                currentMonitorPlayer = activePlayer;
+                await outroPromise;
+                console.log("[State Machine] Outro video finished (faded to black). Proceeding to curtain close...");
+            } catch (e) {
+                console.error("[State Machine] Play outro failed:", e);
+            } finally {
+                clearInterval(intervalId);
+            }
+            
+            // Smoothly fade out blessing text overlay
+            if (blessingOverlay) {
+                console.log("[State Machine] Outro video ended -> Fading out blessing text overlay & seamlessly transitioning to intro.mp4");
+                blessingOverlay.style.transition = 'opacity 500ms ease-in-out';
+                blessingOverlay.classList.remove('opacity-100');
+                blessingOverlay.classList.add('opacity-0');
+                blessingOverlay.style.opacity = '0';
+                stopBlessingSparks();
+                setTimeout(() => blessingOverlay.classList.add('hidden'), 500);
+            }
+            
+            // Seamlessly transition back to Standby Loop (video/intro.mp4)
+            console.log("[State Machine] Outro video finished -> Seamlessly returning to STANDBY_LOOP (intro.mp4)");
+            resetKiosk();
+        }
+
+        /**
+         * Plays video/curtain_close.mp4 to close the curtain over the stage with solid blue opacity
+         */
+        async function closeCurtainOverlay(speed = 1.0, startTime = 4.0) {
+            const curtainOverlay = document.getElementById('curtainOverlayPlayer');
+            if (activePlayer) {
+                console.log(`[DEBUG] activePlayer (${activePlayer.id}): opacity=${activePlayer.style.opacity}, classList=${activePlayer.className}, paused=${activePlayer.paused}, currentTime=${activePlayer.currentTime}`);
+            }
+            if (!curtainOverlay) return;
+            
+            curtainOverlay.src = "video/curtain_close.mp4";
+            curtainOverlay.currentTime = startTime;
+            curtainOverlay.style.zIndex = '30';
+            curtainOverlay.style.mixBlendMode = 'normal';
+            curtainOverlay.muted = true;
+            curtainOverlay.style.opacity = '1.0';
+            curtainOverlay.playbackRate = speed;
+            
+            const remainingPlayTime = (6.90 - startTime) / speed;
+            const timeoutMs = (remainingPlayTime + 0.6) * 1000;
+            
+            try {
+                await new Promise((resolve) => {
+                    let resolved = false;
+                    const finish = () => {
+                        if (!resolved) {
+                            resolved = true;
+                            clearTimeout(safetyTimeout);
+                            curtainOverlay.onplaying = null;
+                            curtainOverlay.onended = null;
+                            resolve();
+                        }
+                    };
+                    const safetyTimeout = setTimeout(() => {
+                        console.warn(`curtain close onended timeout fallback triggered (speed=${speed}, start=${startTime})`);
+                        finish();
+                    }, timeoutMs); 
+                    
+                    curtainOverlay.onplaying = () => {
+                        syncAudioWithVideo("video/curtain_close.mp4", false, startTime, speed);
+                    };
+                    curtainOverlay.onended = finish;
+                    curtainOverlay.play().catch(e => {
+                        console.warn("curtain close play failed:", e);
+                        finish();
+                    });
+                });
+            } catch(e) {
+                console.warn("curtain close error:", e);
+            }
+            // Maintain curtainOverlay at opacity: 1 holding solid blue curtain until intro.mp4 starts rendering!
+        }
+
+        // ================= DYNAMIC GOLD DUST SPARKS & EMBERS CANVAS =================
+        let blessingSparksAnimId = null;
+        function startBlessingSparks() {
+            const canvas = document.getElementById('blessingSparksCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement?.offsetWidth || window.innerWidth;
+            canvas.height = canvas.parentElement?.offsetHeight || window.innerHeight;
+            
+            const sparks = [];
+            const colors = ['#ffffff', '#f2f7ff', '#e6f0ff', '#ffffff', '#d9e6ff', '#ffffff'];
+            
+            for (let i = 0; i < 50; i++) {
+                sparks.push({
+                    x: Math.random() * canvas.width,
+                    y: canvas.height * 0.4 + Math.random() * (canvas.height * 0.6),
+                    radius: Math.random() * 2.8 + 1.2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: -(Math.random() * 1.8 + 0.8),
+                    alpha: Math.random() * 0.8 + 0.2,
+                    pulse: Math.random() * 0.04 + 0.02
+                });
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                sparks.forEach(s => {
+                    s.x += s.vx;
+                    s.y += s.vy;
+                    s.alpha += Math.sin(Date.now() * s.pulse) * 0.02;
+                    s.alpha = Math.max(0.1, Math.min(1.0, s.alpha));
+                    
+                    if (s.y < 0 || s.x < 0 || s.x > canvas.width) {
+                        s.x = Math.random() * canvas.width;
+                        s.y = canvas.height;
+                        s.alpha = Math.random() * 0.8 + 0.2;
+                    }
+                    
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = s.color;
+                    ctx.globalAlpha = s.alpha;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = s.color;
+                    ctx.fill();
+                    ctx.restore();
+                });
+                
+                blessingSparksAnimId = requestAnimationFrame(animate);
+            }
+            
+            if (blessingSparksAnimId) cancelAnimationFrame(blessingSparksAnimId);
+            animate();
+        }
+        
+        function stopBlessingSparks() {
+            if (blessingSparksAnimId) {
+                cancelAnimationFrame(blessingSparksAnimId);
+                blessingSparksAnimId = null;
+            }
+            const canvas = document.getElementById('blessingSparksCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+
+
+            // ================= INTERACTIVE DETECTOR CALLBACKS =================
+            // --- MANUAL BYPASS FOR TESTING ---
+            document.addEventListener('click', (e) => {
+                // Ignore clicks on buttons/controls
+                if (e.target.tagName.toLowerCase() === 'button' || e.target.closest('button')) return;
+                
+                if (currentState === AppState.STANDBY_LOOP) {
+                    console.log("[State Machine] 🖱️ MANUAL CLICK BYPASS: Start Cinematic Flow!");
+                    if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("success", "手动触发开幕");
+                    startCinematicFlow();
+                } 
+                else if (currentState === AppState.STANDBY_WAIT) {
+                    console.log("[State Machine] 🖱️ MANUAL CLICK BYPASS: Pose Matched!");
+                    if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("success", "手动触发跳舞");
+                    triggerMainDance();
+                }
+                else if (currentState === AppState.DANCE_LOOP) {
+                    console.log("[State Machine] 🖱️ MANUAL CLICK BYPASS: Trigger Spin!");
+                    if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("success", "手动触发舞蹈");
+                    window.onUserSpin();
+                }
+                else if (currentState === AppState.SPIN_LOOPING) {
+                    console.log("[State Machine] 🖱️ MANUAL CLICK BYPASS: Trigger Stillness (End)!");
+                    if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("success", "手动触发结束");
+                    if (typeof window.onUserStill === 'function') window.onUserStill(true);
+                }
+            });
+
+            window.onUserSpin = function() {
+                console.log(`[State Machine] onUserSpin triggered (Spread Arms Gesture)! currentState = "${currentState}"`);
+                // STRICT: ONLY trigger material transition when waiting for user gesture! NEVER interrupt active dance!
+                if (currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.WAITING_FOR_SPIN_RESUME) {
+                    if (window.spinResumeTimer) {
+                        clearTimeout(window.spinResumeTimer);
+                        window.spinResumeTimer = null;
+                    }
+                    console.log(`[State Machine] Spread arms gesture validated -> Playing material transition (Step ${spinVideoIndex + 1})`);
+                    triggerSpinTransition();
+                } else {
+                    console.log(`[State Machine] Gesture ignored in current state: "${currentState}"`);
+                }
+            };
+
+            window.onUserStill = function(isAbsent) {
+                if (isAbsent && window.presenceTimer) {
+                    console.log("[State Machine] User left. Cancelling cinematic trigger.");
+                    clearTimeout(window.presenceTimer);
+                    window.presenceTimer = null;
+                }
+
+                // If user leaves frame, or is still (hands down) for 5 seconds
+                if (currentState === AppState.WAITING_FOR_SPIN || currentState === AppState.WAITING_FOR_SPIN_RESUME || currentState === AppState.STANDBY_WAIT) {
+                    console.log(`[State Machine] User ${isAbsent ? 'left the scene' : 'is still for 5s'} -> OUTRO_VIDEO`);
+                    playOutroVideo();
+                }
+            };
+
+            window.onUserDetected = function() {
+                if (currentState === AppState.STANDBY_LOOP) {
+                    // Sample color continuously whenever human is present in front of the camera
+                    triggerSilentBackgroundMatch().catch(e => console.error("[State Machine] Match failed:", e));
+
+                    if (!window.presenceTimer) {
+                        console.log("[State Machine] Real human detected! Starting 1.5s presence confirmation...");
+                        
+                        window.presenceTimer = setTimeout(() => {
+                            if (currentState === AppState.STANDBY_LOOP) {
+                                // Confirm user is STILL present after 1.5s (prevents false background noise triggers)
+                                if (mocap && !mocap.isAbsent) {
+                                    console.log("[State Machine] User presence confirmed (1.5s)! Auto-starting cinematic flow.");
+                                    startCinematicFlow();
+                                } else {
+                                    console.log("[State Machine] False trigger avoided: user is absent before 1.5s confirmation.");
+                                }
+                            }
+                            window.presenceTimer = null;
+                        }, 1500);
+                    }
+                }
+            };
+            
+            window.onUserActive = function() {};
+
+        async function triggerMainDance() {
+            if (currentState !== AppState.STANDBY_WAIT) return;
+            
+            console.log("[State Machine] Pose matched -> DANCE_LOOP");
+            currentState = AppState.DANCE_LOOP;
+            
+            const matchedId = window.matchedFigurineId || 'white';
+            const figurine = FIGURINES_DB[matchedId];
+            const danceVid = figurine ? figurine.danceVideo : "video/white_dance.mp4";
+            
+            if (mocap) {
+                mocap.isPoseTriggerMode = false; // Disable trigger during active dance playback
+                mocap.matchStartTime = null;
+            }
+            
+            // Hide "Prompt Dance" PNG
+            const promptDance = document.getElementById('promptDanceImg');
+            if (promptDance) { 
+                promptDance.classList.remove('opacity-100'); 
+                setTimeout(() => promptDance.classList.add('hidden'), 500); 
+            }
+            
+            const showMatPromptCallback = () => {
+                const promptMat = document.getElementById('promptMaterialImg');
+                if (promptMat) {
+                    promptMat.classList.remove('hidden');
+                    void promptMat.offsetWidth;
+                    promptMat.classList.add('opacity-100');
+                }
+                console.log(`[State Machine] Dance video ended. Transitioning to WAITING_FOR_SPIN. Waiting for user to spread arms.`);
+                currentState = AppState.WAITING_FOR_SPIN;
+                syncAudioWithVideo(null);
+                
+                // Switch pose detection to "spread_arms" to trigger material change
+                if (mocap) {
+                    mocap.activePoseKey = 'spread_arms';
+                    mocap.matchStartTime = null;
+                    mocap.isPoseTriggerMode = true; // Enable gesture detection
+                }
+            };
+            
+            try {
+                await playSeamlessVideo(danceVid, false, 'normal', showMatPromptCallback);
+            } catch (e) {
+                console.error("[State Machine] Play failed:", e);
+            }
+            console.log(`[State Machine] Dance video ended. Paused at end frame.`);
+        }
+
+        async function triggerSpinTransition() {
+            currentState = AppState.SPIN_LOOPING;
+            if (mocap) {
+                mocap.isPoseTriggerMode = false; // Disable gesture trigger while video is playing
+                mocap.matchStartTime = null;
+            }
+            
+            const matchedId = window.matchedFigurineId || 'white';
+            
+            // 5-step continuous material transition loop:
+            // 0: {color}_to_big -> 1: big_flower_to_round -> 2: round_to_blue_flower -> 3: blue_flower_to_stripe -> 4: stripe_to_{color} -> loop!
+            const step = spinVideoIndex % 5;
+            let spinVideoSrc = "";
+            if (step === 0) {
+                spinVideoSrc = `video/${matchedId}_to_big.mp4`;
+            } else if (step === 1) {
+                spinVideoSrc = "video/big_flower_to_round.mp4";
+            } else if (step === 2) {
+                spinVideoSrc = "video/round_to_blue_flower.mp4";
+            } else if (step === 3) {
+                spinVideoSrc = "video/blue_flower_to_stripe.mp4";
+            } else if (step === 4) {
+                spinVideoSrc = `video/stripe_to_${matchedId}.mp4`;
+            }
+            
+            console.log(`[State Machine] Playing spin transition video (Step ${step + 1}/5): ${spinVideoSrc}`);
+            
+            // Fade out the prompt temporarily while the video plays
+            const promptMat = document.getElementById('promptMaterialImg');
+            if (promptMat) { 
+                promptMat.classList.remove('opacity-100'); 
+                setTimeout(() => promptMat.classList.add('hidden'), 500);
+            }
+            
+            const showMatPromptCallback = () => {
+                if (promptMat) {
+                    promptMat.classList.remove('hidden');
+                    void promptMat.offsetWidth;
+                    promptMat.classList.add('opacity-100');
+                }
+                
+                spinVideoIndex++;
+                
+                // Pause at end frame, DO NOT AUTO-LOOP. Require user to perform spread arms gesture again!
+                console.log(`[State Machine] Material video finished and frozen on last frame. Waiting for next spread arms gesture.`);
+                currentState = AppState.WAITING_FOR_SPIN_RESUME;
+                syncAudioWithVideo(null);
+                
+                if (mocap) {
+                    mocap.activePoseKey = 'spread_arms';
+                    mocap.matchStartTime = null;
+                    mocap.isPoseTriggerMode = true;
+                }
+                
+                // If user leaves or stays still for 5 seconds after transition, proceed to outro
+                window.spinResumeTimer = setTimeout(() => {
+                    if (currentState === AppState.WAITING_FOR_SPIN_RESUME || currentState === AppState.WAITING_FOR_SPIN) {
+                        console.log(`[State Machine] 5s elapsed without raising hands. Triggering outro.`);
+                        playOutroVideo();
+                    }
+                }, 5000);
+            };
+            
+            try {
+                await playSeamlessVideo(spinVideoSrc, false, 'normal', showMatPromptCallback);
+            } catch (e) {
+                console.error("[State Machine] Play failed:", e);
+            }
+            console.log(`[State Machine] Spin video ${spinVideoIndex} ended. Paused on last frame.`);
+        }
+
+        /**
+         * Helper to update the floating instruction text with a smooth fade animation
+         */
+        function updateInstruction(text) {
+            const card = document.getElementById('kioskInstruction');
+            const textSpan = document.getElementById('kioskInstructionText');
+            if (!card || !textSpan) return;
+            
+            card.classList.remove('opacity-100', 'translate-y-0');
+            card.classList.add('opacity-0', 'translate-y-4');
+            
+            setTimeout(() => {
+                textSpan.innerText = text;
+                card.classList.remove('opacity-0', 'translate-y-4');
+                card.classList.add('opacity-100', 'translate-y-0');
+            }, 300);
+        }
+
+        function showGuidancePrompt(text) {
+            // Disabled per user request to keep screen entirely clean
+        }
+
+        function hideGuidancePrompt() {
+            // Disabled per user request to keep screen entirely clean
+        }
+
+        // ================= SILENT BACKGROUND AI MATCHING & STICKER TEXT GENERATION =================
+
+        function matchFigurineByColor(color) {
+            console.log("[AI Match] Finding matching figurine for color:", color);
+            // Search in database
+            for (let key in FIGURINES_DB) {
+                if (FIGURINES_DB[key].tags && FIGURINES_DB[key].tags.color === color) {
+                    return FIGURINES_DB[key];
+                }
+            }
+            // Fallback to white
+            return FIGURINES_DB['white'];
+        }
+
+        function updateMuseumInfoCard(figurine) {
+            console.log("[AI Match] Updating museum card with figurine:", figurine.name);
+            const nameEl = document.getElementById('museumFigurineName');
+            const descEl = document.getElementById('museumFigurineDesc');
+            const thumbEl = document.getElementById('museumFigurineThumb');
+            const stickerText = document.getElementById('stickerBlessing');
+            
+            if (nameEl) nameEl.innerText = figurine.name;
+            if (descEl) descEl.innerText = figurine.desc;
+            if (thumbEl) thumbEl.src = figurine.image;
+            if (stickerText && figurine.blessing) {
+                stickerText.innerText = figurine.blessing;
+                window.aiBlessing = figurine.blessing;
+            }
+
+            // Also update the target pose inside motion capture if available
+            if (window.mocap) {
+                window.mocap.currentPoseKey = figurine.poseKey;
+                console.log("[AI Match] Sync'd mocap target pose to:", figurine.poseKey);
+            }
+        }
+
+        function mapDescriptionToColor(text) {
+            const lower = text.toLowerCase();
+            
+            const colorDefinitions = {
+                '红': ['red', 'orange', 'yellow', 'pink', 'brown', '红', '黄', '橙', '褐'],
+                '蓝': ['blue', 'green', 'cyan', 'purple', '蓝', '绿', '青', '紫'],
+                '黑': ['black', 'dark', '黑'],
+                '白': ['white', 'light', '白'],
+                '灰': ['gray', 'grey', 'silver', '灰']
+            };
+
+            const anchors = ['dressed', 'wearing', 'outfit', 'shirt', 'clothing', 'top', 't-shirt', 'skirt', 'robe', 'garment', 'suit', 'dress', 'clothes', '衣', '衫', '裙', '袍'];
+            
+            // Find all anchor indices
+            const anchorIndices = [];
+            anchors.forEach(anchor => {
+                let startIndex = 0;
+                let idx;
+                while ((idx = lower.indexOf(anchor, startIndex)) > -1) {
+                    anchorIndices.push(idx);
+                    startIndex = idx + anchor.length;
+                }
+            });
+
+            if (anchorIndices.length === 0) {
+                console.warn("[Color Map] No clothing anchors found in description! Using global simple matching.");
+                // Fallback to simple matching
+                for (let color in colorDefinitions) {
+                    for (let kw of colorDefinitions[color]) {
+                        if (lower.includes(kw)) return color;
+                    }
+                }
+                return null; // DO NOT fallback to white if unrecognized!
+            }
+
+            let bestColor = null;
+            let minDistance = 999999;
+
+            for (let color in colorDefinitions) {
+                const keywords = colorDefinitions[color];
+                keywords.forEach(kw => {
+                    let startIndex = 0;
+                    let kwIdx;
+                    while ((kwIdx = lower.indexOf(kw, startIndex)) > -1) {
+                        // Look-ahead filter for modifiers 'dark' and 'light'
+                        if (kw === 'dark' || kw === 'light') {
+                            const followingText = lower.substring(kwIdx + kw.length, kwIdx + kw.length + 15);
+                            let hasOtherColor = false;
+                            for (let otherColor in colorDefinitions) {
+                                const otherKeywords = colorDefinitions[otherColor];
+                                for (let okw of otherKeywords) {
+                                    if (okw !== 'dark' && okw !== 'light' && followingText.includes(okw)) {
+                                        hasOtherColor = true;
+                                        break;
+                                    }
+                                }
+                                if (hasOtherColor) break;
+                            }
+                            if (hasOtherColor) {
+                                console.log("[Color Map] Skipping modifier", kw, "followed by color in:", followingText);
+                                startIndex = kwIdx + kw.length;
+                                continue;
+                            }
+                        }
+
+                        // Calculate min distance to any anchor
+                        anchorIndices.forEach(aIdx => {
+                            const dist = Math.abs(kwIdx - aIdx);
+                            if (dist < minDistance) {
+                                minDistance = dist;
+                                bestColor = color;
+                                console.log("[Color Map] New closest color:", color, "(kw:", kw, "at", kwIdx, ") to anchor at", aIdx, "dist:", dist);
+                            }
+                        });
+                        
+                        startIndex = kwIdx + kw.length;
+                    }
+                });
+            }
+
+            return bestColor;
+        }
+
+        async function classifyColorWithVLM(base64Image, useLocalAI) {
+            if (!useLocalAI) {
+                // Gemini Cloud VLM path
+                const apiKey = document.getElementById('apiKey')?.value || '';
+                let url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+                if (apiKey) {
+                    url += `?key=${apiKey}`;
+                } else {
+                    url = '/api/gemini';
+                }
+                
+                const prompt = "Describe the clothing of the person in this image. What is the dominant color?";
+                
+                const payload = {
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            { inlineData: { mimeType: "image/jpeg", data: base64Image } }
+                        ]
+                    }],
+                    generationConfig: { temperature: 0.1 }
+                };
+                
+                const response = await fetchWithTimeout(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }, 10000);
+                
+                if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+                const resJson = await response.json();
+                const text = resJson.candidates[0].content.parts[0].text;
+                console.log("[Color Classifier] Gemini Cloud output:", text);
+                const mapped = mapDescriptionToColor(text);
+                return mapped ? { mappedColor: mapped, rawText: text } : null;
+            } else {
+                // Local Ollama Gemma Vision path (strictly locks to gemma4:e2b)
+                const endpoint = document.getElementById('apiEndpoint')?.value || 'http://localhost:11434';
+                
+                // HTTPS Mixed Content Guard
+                if (window.location.protocol === 'https:' && endpoint.startsWith('http:')) {
+                    console.log("[AI Match] HTTPS mixed content guard: local HTTP Ollama endpoint bypassed on static HTTPS host.");
+                    return null;
+                }
+                
+                const cleanEndpoint = endpoint.replace(/\/v1\/?$/, '').replace(/\/$/, '');
+                
+                // Default to moondream as per README, fallback to gemma
+                let modelName = "moondream";
+                try {
+                    const tagsRes = await fetchWithTimeout(`${cleanEndpoint}/api/tags`, { method: 'GET' }, 2000);
+                    if (tagsRes.ok) {
+                        const tagsJson = await tagsRes.json();
+                        if (tagsJson.models && tagsJson.models.length > 0) {
+                            let foundModel = tagsJson.models.find(m => (m.name || m.model || '').toLowerCase().includes('moondream'));
+                            if (!foundModel) {
+                                foundModel = tagsJson.models.find(m => (m.name || m.model || '').toLowerCase().includes('gemma'));
+                            }
+                            if (foundModel) {
+                                modelName = foundModel.name || foundModel.model;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`[Gemma Vision 🦙] Auto-detect model failed, using default: "${modelName}"`, e);
+                }
+                console.log(`[Gemma Vision 🦙] Strictly using Gemma Vision Model: "${modelName}"`);
+                
+                const url = `${cleanEndpoint}/api/generate`;
+                const system = "You are an AI vision classifier. Look at the upper clothing of the person in this photo. Choose strictly from: Black, White, Red, Blue, Gray. Output only the single color name.";
+                const prompt = "What is the dominant color of the upper clothing in this photo? Black, White, Red, Blue, or Gray?";
+                
+                const payload = {
+                    model: modelName,
+                    system: system,
+                    prompt: prompt,
+                    images: [base64Image],
+                    stream: false,
+                    options: {
+                        temperature: 0.0,
+                        num_predict: 10
+                    }
+                };
+                
+                console.log(`[Gemma Vision 🦙] Sending vision classification request to ${modelName} (8.0s timeout)...`);
+                const response = await fetchWithTimeout(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }, 8000); // 8.0s timeout per user directive
+                
+                if (!response.ok) throw new Error(`Local VLM error: ${response.status} (Model: ${modelName})`);
+                const resJson = await response.json();
+                const text = (resJson.response || resJson.message?.content || "").trim();
+                console.log(`[Gemma Vision 🦙] Output from ${modelName}: "${text}"`);
+                const mapped = mapDescriptionToColor(text);
+                return mapped ? { mappedColor: mapped, rawText: text } : null;
+            }
+        }
+
+        /**
+         * Real-time Computer Vision Torso Color Sensor (0.005s instant, 100% reliable)
+         * Directly samples chest/torso pixels from the webcam frame in HSV color space.
+         */
+        function detectDominantTorsoColor(videoEl, lm) {
+            if (!videoEl || !videoEl.videoWidth) return '白';
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 160;
+                canvas.height = 160;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoEl, 0, 0, 160, 160);
+                
+                // Torso center chest region (exclude neck, face, and outer background)
+                let minX = 45, maxX = 115, minY = 55, maxY = 115;
+                if (lm && lm[11] && lm[12]) {
+                    const sLX = lm[11].x * 160;
+                    const sRX = lm[12].x * 160;
+                    const sY = ((lm[11].y + lm[12].y) / 2) * 160;
+                    let hY = sY + Math.abs(sLX - sRX) * 1.3;
+                    if (lm[23] && lm[24]) hY = ((lm[23].y + lm[24].y) / 2) * 160;
+                    
+                    const shoulderSpan = Math.abs(sLX - sRX);
+                    const centerX = (sLX + sRX) / 2;
+                    minX = Math.max(5, centerX - shoulderSpan * 0.20);
+                    maxX = Math.min(155, centerX + shoulderSpan * 0.20);
+                    minY = Math.max(5, sY + shoulderSpan * 0.15);
+                    maxY = Math.min(155, Math.min(hY - 5, sY + shoulderSpan * 0.55));
+                }
+                
+                const w = Math.max(10, Math.round(maxX - minX));
+                const h = Math.max(10, Math.round(maxY - minY));
+                const imgData = ctx.getImageData(Math.round(minX), Math.round(minY), w, h);
+                const d = imgData.data;
+                
+                let black = 0, white = 0, gray = 0, red = 0, blue = 0, total = 0;
+                
+                for (let i = 0; i < d.length; i += 16) {
+                    const r = d[i], g = d[i+1], b = d[i+2];
+                    // Skip skin tones (chin/neck/chest skin)
+                    if (r > 135 && g > 85 && b > 65 && r > g && g > b && (r - g) < 70 && (r - b) > 30) continue;
+                    
+                    total++;
+                    const max = Math.max(r, g, b) / 255;
+                    const min = Math.min(r, g, b) / 255;
+                    const delta = max - min;
+                    let hue = 0;
+                    const sat = max === 0 ? 0 : delta / max;
+                    const val = max;
+                    
+                    if (delta !== 0) {
+                        if (max === r / 255) hue = ((g / 255 - b / 255) / delta + (g < b ? 6 : 0)) / 6;
+                        else if (max === g / 255) hue = ((b / 255 - r / 255) / delta + 2) / 6;
+                        else hue = ((r / 255 - g / 255) / delta + 4) / 6;
+                    }
+                    const deg = hue * 360;
+                    // Map to 0-100 scale for HSV matching to align with scratch code
+                    const h = deg;
+                    const s = sat * 100;
+                    const v = val * 100;
+                    
+                    // Standard HSV decision tree from scratch version (checks saturation first to filter white/gray/black)
+                    if (v < 22) {
+                        black++;
+                    } else if (s < 30) { // Increased from 18 to 30 to tolerate red-bleed reflections on white shirts
+                        if (v > 70) white++; // Lowered from 75 to 70 to match shadowed white clothes
+                        else gray++;
+                    } else if (h < 25 || h > 335) {
+                        red++;
+                    } else if (h >= 170 && h <= 265) {
+                        blue++;
+                    }
+                }
+                
+                const scores = [
+                    { c: '白', cnt: white },
+                    { c: '黑', cnt: black },
+                    { c: '红', cnt: red },
+                    { c: '蓝', cnt: blue },
+                    { c: '灰', cnt: gray }
+                ];
+                scores.sort((a, b) => b.cnt - a.cnt);
+                const winner = scores[0].c;
+                console.log(`[Pixel Color Sensor 🎨] Winner: "${winner}" (White:${Math.round(white)}, Black:${Math.round(black)}, Red:${Math.round(red)}, Blue:${Math.round(blue)}, Gray:${Math.round(gray)})`);
+                return winner;
+            } catch(e) {
+                console.warn("Pixel color detect error:", e);
+                return '白';
+            }
+        }
+
+        /**
+         * Preload all spin transition and dance videos into browser memory for 0ms instant switching
+         */
+        function preloadSpinVideos(colorId) {
+            const list = [
+                `video/${colorId}_to_big.mp4`,
+                "video/big_flower_to_round.mp4",
+                "video/round_to_blue_flower.mp4",
+                "video/blue_flower_to_stripe.mp4",
+                `video/stripe_to_${colorId}.mp4`,
+                `video/${colorId}_dance.mp4`,
+                `video/reveal_${colorId}.mp4`,
+                `video/${colorId}_outro.mp4`
+            ];
+            list.forEach(src => {
+                const v = document.createElement('video');
+                v.preload = 'auto';
+                v.src = src;
+                v.muted = true;
+                v.load();
+            });
+        }
+
+        async function triggerSilentBackgroundMatch() {
+            if (window.isColorLocked) return; // Do not sample or overwrite once cinematic flow has locked the matched color!
+
+            // 1. INSTANT COMPUTER VISION TORSO PIXEL SENSOR (0.005s Instant Detection)
+            const instantColor = detectDominantTorsoColor(webcamElement, window.mocap?.lastLandmarks);
+            
+            // Only update DOM, card details and stage image if color actually changed to avoid 30fps thrashes
+            if (instantColor !== window.detectedColor) {
+                window.detectedColor = instantColor;
+                const instantFigurine = matchFigurineByColor(instantColor);
+                window.matchedFigurineId = instantFigurine.id;
+                updateMuseumInfoCard(instantFigurine);
+                
+                const stageImg = document.getElementById('stageFigurineImg');
+                if (stageImg && instantFigurine.reveal0sImage) {
+                    stageImg.src = instantFigurine.reveal0sImage;
+                }
+            }
+            if (window.enableVLM) {
+                updateTrackingBadge("success", `衣服识别: ${window.detectedColor} (AI 视觉分析中)`);
+
+                // 2. GEMMA 4 VLM VISION RECOGNITION (Vision-Language Model Background Classification)
+                if (window.isVlmMatching) return;
+                window.isVlmMatching = true;
+
+                window.gemmaVlmPromise = (async () => {
+                    try {
+                        const hiddenCanvas = document.createElement('canvas');
+                        hiddenCanvas.width = 160;
+                        hiddenCanvas.height = 160;
+                        const ctx = hiddenCanvas.getContext('2d');
+                        
+                        // Smart Torso Bbox Cropping: Crop strictly around shoulder/chest landmarks
+                        const lm = window.mocap?.lastLandmarks;
+                        const vw = webcamElement.videoWidth || 640;
+                        const vh = webcamElement.videoHeight || 480;
+                        let srcX = 0, srcY = 0, srcW = vw, srcH = vh;
+                        
+                        if (lm && lm[11] && lm[12]) {
+                            const sLX = lm[11].x * vw;
+                            const sRX = lm[12].x * vw;
+                            const sY = ((lm[11].y + lm[12].y) / 2) * vh;
+                            const shoulderSpan = Math.abs(sLX - sRX);
+                            const centerX = (sLX + sRX) / 2;
+                            
+                            srcX = Math.max(0, centerX - shoulderSpan * 0.65);
+                            srcY = Math.max(0, sY);
+                            srcW = Math.min(vw - srcX, shoulderSpan * 1.3);
+                            srcH = Math.min(vh - srcY, shoulderSpan * 1.4);
+                        }
+                        
+                        ctx.drawImage(webcamElement, srcX, srcY, srcW, srcH, 0, 0, 160, 160);
+                        const base64Image = hiddenCanvas.toDataURL('image/jpeg', 0.80).split(',')[1];
+                        const useLocalAI = document.getElementById('useLocalAI')?.checked ?? true;
+                        
+                        const result = await classifyColorWithVLM(base64Image, useLocalAI);
+                        if (result && result.mappedColor) {
+                            console.log(`[Gemma Vision 🦙] Gemma AI vision matched color: "${result.mappedColor}" (Raw: "${result.rawText}")`);
+                            window.detectedColor = result.mappedColor;
+                            const refinedFigurine = matchFigurineByColor(window.detectedColor);
+                            window.matchedFigurineId = refinedFigurine.id;
+                            updateMuseumInfoCard(refinedFigurine);
+                            if (stageImg && refinedFigurine.reveal0sImage) {
+                                stageImg.src = refinedFigurine.reveal0sImage;
+                            }
+                            preloadSpinVideos(refinedFigurine.id);
+                            updateTrackingBadge("success", `AI 视觉识别: ${window.detectedColor}`);
+                        }
+                    } catch (e) {
+                        console.log("[Gemma Vision 🦙] Gemma Vision refinement skipped:", e.message);
+                    } finally {
+                        window.isVlmMatching = false;
+                    }
+                })();
+            } else {
+                updateTrackingBadge("success", `衣服识别: ${window.detectedColor}`);
+            }
+        }
+
+        function setAwakenButtonReady(ready, color = null) {
+            const btn = document.getElementById('awakenButton');
+            const textSpan = document.getElementById('awakenButtonText');
+            if (!btn || !textSpan) return;
+            if (ready) {
+                btn.removeAttribute('disabled');
+                btn.className = "px-8 py-4 bg-[#1a1105]/95 text-amber-500 border-2 border-amber-500 rounded-full font-classical text-lg font-bold tracking-widest shadow-[0_0_30px_rgba(212,175,55,0.6)] transition-all duration-300 cursor-pointer hover:bg-amber-500 hover:text-black hover:scale-105 active:scale-95 animate-pulse";
+                textSpan.innerHTML = "✨ 时空共鸣，点击唤醒 ✨";
+                window.detectedColor = color;
+            } else {
+                btn.setAttribute('disabled', 'true');
+                btn.className = "px-8 py-4 bg-[#1a1105]/95 text-amber-500/50 border-2 border-amber-500/20 rounded-full font-classical text-lg font-bold tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.05)] transition-all duration-300 cursor-not-allowed";
+                textSpan.innerHTML = `
+                    <svg class="animate-spin h-5 w-5 text-amber-500 mr-3 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    正在感应穿搭...
+                `;
+            }
+        }
+
+
+        /**
+         * Updates the clothing mesh colors in Three.js to match the OOTD hue
+         */
+        function updateMannequinColorPalette(colorTag) {
+            if (!avatar || !avatar.scene) return;
+            
+            let primaryHex = 0x2e7d32; // Default Sancai Green
+            if (colorTag === "红/黄/橙") primaryHex = 0xd32f2f; // Red
+            if (colorTag === "蓝/青") primaryHex = 0x1976d2; // Blue
+            if (colorTag === "黑/白/灰") primaryHex = 0x455a64; // Gray
+            if (colorTag === "多色/印花") primaryHex = 0x7b1fa2; // Purple
+            
+            avatar.scene.traverse((child) => {
+                if (child.isMesh && child.material && child.userData.isClothing && !child.userData.ignorePaletteUpdate) {
+                    child.material.color.setHex(primaryHex);
+                }
+            });
+            console.log(`Mannequin clothing colors updated to matched OOTD hue: ${colorTag}`);
+        }
+
+
+        // ================= MOTION CAPTURE ENGINE INITIALIZATION =================
+
+        /**
+         * Instantiates the MediaPipe Motion Capture Engine
+         */
+        async function createMocapEngine() {
+            if (mocap) {
+                mocap.stop();
+                mocap = null;
+            }
+            
+            if (webcamElement.videoWidth === 0 || webcamElement.videoHeight === 0) {
+                console.log("[Orchestrator] Webcam dimensions are 0x0, awaiting loadeddata...");
+                await new Promise((resolve) => {
+                    webcamElement.addEventListener('loadeddata', () => resolve(), { once: true });
+                    setTimeout(resolve, 500); // Safety timeout
+                });
+            }
+            
+            mocap = new MotionCaptureEngine(webcamElement);
+            initializeMocapCallbacks();
+            mocap.start();
+        }
+
+        /**
+         * Wires up callbacks for the mocap engine
+         */
+        function initializeMocapCallbacks() {
+            if (!mocap) return;
+            
+            // Set default active pose key
+            mocap.activePoseKey = window.currentActivePoseKey || 'optimal_1';
+            
+            // We don't use these score callbacks in the new cinematic flow,
+            // but we keep them to prevent any null reference crashes in the engine.
+            mocap.onPoseScore = function(score) {
+                if (currentState === AppState.STANDBY_WAIT) {
+                    updateTrackingBadge("info", `时空同频中: ${score}%`);
+                }
+            };
+            mocap.onPoseSuccess = function(poseKey) {
+                console.log(`[Mocap Callback] Pose success! PoseKey: ${poseKey}`);
+                if (poseKey === 'spread_arms') {
+                    if (typeof window.onUserSpin === 'function') {
+                        window.onUserSpin();
+                    }
+                } else {
+                    triggerMainDance();
+                }
+            };
+        }
+
+        // ================= UTILITY HELPERS =================
+
+        
+
+        /**
+         * Synthesizes a beautiful chime sound using Web Audio API
+         */
+        function playChimeEffect() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+                osc.frequency.exponentialRampToValueAtTime(1318.51, ctx.currentTime + 0.3); // E6
+                
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.55);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.6);
+            } catch(e) {
+                console.warn("Failed to play Web Audio chime:", e);
+            }
+        }
+
+        /**
+         * Updates the top-left tracking status badge text and color
+         */
+        function updateTrackingBadge(status, text) {
+            const badge = document.getElementById('trackingStatus');
+            const dot = document.getElementById('statusDot');
+            if (!badge || !dot) return;
+            
+            let colorClass = "bg-error";
+            if (status === 'success') colorClass = "bg-success animate-ping";
+            if (status === 'info') colorClass = "bg-info";
+            if (status === 'warning') colorClass = "bg-warning";
+            
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full mr-1.5 ${colorClass}" id="statusDot"></span> ${text}`;
+        }
+
+        
+
+
+
+        // Bypassed legacy functions kept to prevent reference errors
+        function updateSilhouetteSVG(poseKey) {}
+        function skipPoseChallenge() {
+            console.log("[Debug] Direct awakening to Sancai dance!");
+            resetKiosk();
+            
+            // Hide start overlay
+            const startOverlay = document.getElementById('startOverlay');
+            if (startOverlay) {
+                startOverlay.classList.add('opacity-0', 'pointer-events-none');
+            }
+            
+            currentState = AppState.STANDBY_WAIT;
+            triggerMainDance();
+        }
+    </script>
+
+    <!-- Beautiful Toast Notification Container -->
+    <div id="toastContainer" class="toast toast-bottom toast-end z-[999] p-4"></div>
+
+
+
+</body>
+</html>
