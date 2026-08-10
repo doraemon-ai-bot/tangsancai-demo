@@ -1104,7 +1104,7 @@
             curtainOverlay.src = "video/curtain_close.mp4";
             curtainOverlay.currentTime = 0;
             curtainOverlay.style.zIndex = '30';
-            curtainOverlay.style.mixBlendMode = 'normal'; // Normal blend mode renders rich solid curtain closing to full solid opacity
+            curtainOverlay.style.mixBlendMode = 'screen'; // Screen mode makes black background transparent so outro video shows through underneath!
             curtainOverlay.muted = true;
             curtainOverlay.style.opacity = '1';
             
