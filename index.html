@@ -17,10 +17,13 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Noto+Serif+SC:wght@300;400;600;900&family=Space+Grotesk:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;600;900&family=ZCOOL+XiaoWei&display=swap');
         
         .font-classical {
-            font-family: 'Noto Serif SC', 'Noto Serif CJK SC', 'SimSun', serif;
+            font-family: 'Ma Shan Zheng', 'ZCOOL XiaoWei', 'Noto Serif SC', 'SimSun', serif;
+        }
+        .font-calligraphy {
+            font-family: 'Ma Shan Zheng', 'ZCOOL XiaoWei', 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
         }
         .font-roman {
             font-family: 'Cinzel', serif;
@@ -218,9 +221,9 @@
                 <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
                 <!-- Outro Pure Cinematic Golden Blessing (State: OUTRO_VIDEO End) -->
-                <div id="outroBlessingOverlay" class="hidden absolute inset-x-0 bottom-16 z-40 flex items-center justify-center p-4 transition-all duration-700 opacity-0 pointer-events-none">
-                    <div style="background: radial-gradient(ellipse at center, rgba(15, 10, 5, 0.88) 0%, rgba(5, 3, 1, 0.70) 65%, rgba(0,0,0,0) 100%); padding: 18px 52px; text-align: center;">
-                        <span id="outroBlessingText" class="font-classical text-2xl md:text-3xl font-bold tracking-[0.4em] text-[#fffae6] drop-shadow-[0_0_22px_rgba(245,158,11,0.9),0_2px_5px_rgba(0,0,0,0.95)] whitespace-nowrap">
+                <div id="outroBlessingOverlay" class="hidden absolute inset-x-0 bottom-16 z-40 flex items-center justify-center p-4 transition-all duration-1000 opacity-0 pointer-events-none">
+                    <div style="background: radial-gradient(ellipse at center, rgba(12, 8, 4, 0.90) 0%, rgba(5, 3, 1, 0.70) 65%, rgba(0,0,0,0) 100%); padding: 20px 64px; text-align: center;">
+                        <span id="outroBlessingText" class="font-calligraphy text-3xl md:text-5xl tracking-[0.25em] text-[#fff8db] drop-shadow-[0_0_25px_rgba(245,185,55,0.9),0_2px_8px_rgba(0,0,0,0.95)] whitespace-nowrap">
                             一舞千年 · 余韵绕梁
                         </span>
                     </div>
@@ -711,6 +714,14 @@
                     nextPlayer.classList.add('opacity-100');
                     nextPlayer.style.opacity = '1';
                     
+                    // Always hide static stage image once active video begins rendering
+                    const stageImg = document.getElementById('stageFigurineImg');
+                    if (stageImg) {
+                        stageImg.classList.remove('opacity-100');
+                        stageImg.classList.add('opacity-0');
+                        stageImg.style.opacity = '0';
+                    }
+                    
                     // Only hide previous player AFTER next player has rendered active frames!
                     if (prevPlayer && prevPlayer !== nextPlayer) {
                         setTimeout(() => {
@@ -845,27 +856,10 @@
             // Preload spin videos for this figurine immediately
             preloadSpinVideos(figurine.id);
 
-            // 1. Immediately pause and hide the intro video players so they are NEVER visible under the curtain
+            const stageImg = document.getElementById('stageFigurineImg');
+            const curtainOverlay = document.getElementById('curtainOverlayPlayer');
             const playerA = document.getElementById('videoPlayerA');
             const playerB = document.getElementById('videoPlayerB');
-            if (playerA) { playerA.pause(); playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
-            if (playerB) { playerB.pause(); playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
-
-            // 2. Put the 0s silhouette image of the stage + figurine ON THE STAGE (z-20)
-            const stageImg = document.getElementById('stageFigurineImg');
-            if (stageImg) {
-                stageImg.src = figurine.reveal0sImage;
-                stageImg.style.zIndex = '20';
-                stageImg.classList.remove('opacity-0');
-                stageImg.classList.add('opacity-100');
-                stageImg.style.opacity = '1';
-                console.log(`[State Machine] Staged silhouette 0s image under curtain: ${figurine.reveal0sImage}`);
-            }
-
-            // 3. Play opening curtain video (curtain.mp4) on curtainOverlayPlayer (z-30) with screen blend
-            // As the blue curtain pulls apart from center to sides, the viewer sees ONLY the silhouette image in the center opening!
-            console.log(`[State Machine] Playing opening curtain with silhouette underneath: video/curtain.mp4`);
-            const curtainOverlay = document.getElementById('curtainOverlayPlayer');
             
             if (curtainOverlay) {
                 curtainOverlay.src = "video/curtain.mp4?v=20260810_fresh";
@@ -877,6 +871,23 @@
                 try {
                     await new Promise((resolve) => {
                         curtainOverlay.onended = resolve;
+                        
+                        // ONLY when curtain.mp4 actually begins rendering active frames:
+                        curtainOverlay.onplaying = () => {
+                            // 1. Prepare stage silhouette image directly behind the opening curtain
+                            if (stageImg) {
+                                stageImg.src = figurine.reveal0sImage;
+                                stageImg.style.zIndex = '15';
+                                stageImg.classList.remove('opacity-0');
+                                stageImg.classList.add('opacity-100');
+                                stageImg.style.opacity = '1';
+                                console.log(`[State Machine] Staged silhouette 0s image under curtain: ${figurine.reveal0sImage}`);
+                            }
+                            // 2. Simultaneously hide previous standby video with ZERO visual gap
+                            if (playerA) { playerA.pause(); playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
+                            if (playerB) { playerB.pause(); playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
+                        };
+                        
                         curtainOverlay.play().catch(e => {
                             console.warn("curtain overlay play failed:", e);
                             resolve();
@@ -890,17 +901,19 @@
                 await playSeamlessVideo("video/curtain.mp4", false, 'normal');
             }
             
-            // 4. Curtain has finished opening -> Play reveal video (reveal_{color}.mp4)
+            // --- 阶段 2: 帘子拉开完毕 -> 立即隐藏剪影图片，由出场视频接管播放 ---
+            if (stageImg) {
+                stageImg.classList.remove('opacity-100');
+                stageImg.classList.add('opacity-0');
+                stageImg.style.opacity = '0';
+                stageImg.style.zIndex = '5';
+            }
+
             const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
             const finalFigurine = FIGURINES_DB[finalMatchedId] || FIGURINES_DB['white'];
             console.log(`[State Machine] Curtain finished -> Playing reveal video: ${finalFigurine.revealVideo} (Color: ${finalFigurine.tags?.color || '白'})`);
             
             const showPromptCallback = () => {
-                if (stageImg) {
-                    stageImg.classList.remove('opacity-100');
-                    stageImg.classList.add('opacity-0');
-                    stageImg.style.opacity = '0';
-                }
                 console.log("[State Machine] Reveal video ended -> STANDBY_WAIT (Raise Left Hand Challenge)");
                 currentState = AppState.STANDBY_WAIT;
                 
