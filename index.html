@@ -882,10 +882,13 @@
             const playerB = document.getElementById('videoPlayerB');
             
             if (curtainOverlay) {
-                curtainOverlay.src = "video/curtain.mp4?v=20260810_fresh";
+                if (!curtainOverlay.src || !curtainOverlay.src.includes("video/curtain.mp4")) {
+                    curtainOverlay.src = "video/curtain.mp4";
+                }
+                curtainOverlay.currentTime = 0;
                 curtainOverlay.style.zIndex = '30';
                 curtainOverlay.classList.remove('hidden');
-                curtainOverlay.style.mixBlendMode = 'normal'; // Fix: Normal blend mode prevents screen brightening double-exposure
+                curtainOverlay.style.mixBlendMode = 'normal'; // Normal blend mode prevents screen brightening double-exposure
                 curtainOverlay.style.opacity = '1';
                 
                 try {
@@ -1548,7 +1551,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }, 15000);
+                }, 3500); // 3.5s fast timeout to prevent blocking video decoder threads
                 
                 if (!response.ok) throw new Error(`Local VLM error: ${response.status} (Model: ${modelName})`);
                 const resJson = await response.json();
