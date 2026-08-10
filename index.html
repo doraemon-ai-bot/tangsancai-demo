@@ -217,14 +217,23 @@
                 <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_dance.png" alt="提示跳舞" />
                 <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
-                <!-- Outro Refined Imperial Gold Blessing Display (State: OUTRO_VIDEO End) -->
-                <div id="outroBlessingOverlay" class="hidden absolute inset-x-0 bottom-16 z-40 flex items-center justify-center p-4 transition-all duration-700 opacity-0 pointer-events-none">
-                    <div style="background: rgba(18, 12, 8, 0.95); border: 2px solid #d4af37; border-radius: 18px; box-shadow: 0 15px 45px rgba(0,0,0,0.95), inset 0 0 15px rgba(212,175,55,0.25); padding: 14px 40px; display: flex; align-items: center; justify-content: center; gap: 14px;">
-                        <span style="width: 8px; height: 8px; background: #d4af37; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #d4af37;"></span>
-                        <span id="outroBlessingText" class="font-classical text-xl md:text-2xl font-bold tracking-[0.35em] text-[#fff0c8] drop-shadow-[0_2px_10px_rgba(212,175,55,0.9)] whitespace-nowrap">
+                <!-- Outro Cinematic Golden Blessing Card (State: OUTRO_VIDEO End) -->
+                <div id="outroBlessingOverlay" class="hidden absolute inset-x-0 bottom-12 z-40 flex flex-col items-center justify-center p-6 transition-all duration-1000 opacity-0 pointer-events-none">
+                    <div style="background: radial-gradient(ellipse at center, rgba(30, 18, 8, 0.92) 0%, rgba(10, 6, 2, 0.85) 65%, rgba(0,0,0,0) 100%); padding: 24px 60px; display: flex; flex-col; align-items: center; justify-content: center; text-align: center;">
+                        <!-- Classical Tag Header -->
+                        <div class="text-[12px] font-classical tracking-[0.45em] text-amber-400/80 font-bold uppercase mb-2 drop-shadow-[0_2px_8px_rgba(245,158,11,0.6)]">
+                            ✦ 盛唐 · 典藏吉祥 ✦
+                        </div>
+                        
+                        <!-- Main Glowing Calligraphy Text -->
+                        <div id="outroBlessingText" class="font-classical text-2xl md:text-3xl font-black tracking-[0.35em] text-[#fff9e6] drop-shadow-[0_0_25px_rgba(245,158,11,0.9),0_2px_6px_rgba(0,0,0,0.9)] my-1 whitespace-nowrap">
                             一舞千年 · 余韵绕梁
-                        </span>
-                        <span style="width: 8px; height: 8px; background: #d4af37; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #d4af37;"></span>
+                        </div>
+                        
+                        <!-- Vermilion Imperial Seal Stamp -->
+                        <div class="mt-2.5 inline-flex items-center gap-1 px-2.5 py-0.5 border border-red-500/70 bg-red-950/60 rounded text-red-400 font-classical text-[10px] tracking-[0.25em] font-bold shadow-[0_0_12px_rgba(239,68,68,0.4)]">
+                            <span>大唐</span><span>·</span><span>天宝</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -1041,15 +1050,15 @@
                     triggerSilentBackgroundMatch().catch(e => console.error("[State Machine] Match failed:", e));
 
                     if (!window.presenceTimer) {
-                        console.log("[State Machine] User detected! Starting 3s continuous presence confirmation...");
+                        console.log("[State Machine] User detected! Starting 1.0s fast presence confirmation...");
                         
                         window.presenceTimer = setTimeout(() => {
                             if (currentState === AppState.STANDBY_LOOP) {
-                                console.log("[State Machine] User presence confirmed for 3.0 seconds! Auto-starting cinematic flow.");
+                                console.log("[State Machine] User presence confirmed (1.0s)! Auto-starting cinematic flow.");
                                 startCinematicFlow();
                             }
                             window.presenceTimer = null;
-                        }, 3000);
+                        }, 1000);
                     }
                 }
             };
