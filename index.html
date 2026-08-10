@@ -1775,46 +1775,6 @@
                     window.isVlmMatching = false;
                 }
             })();
-        }eImg = document.getElementById('stageFigurineImg');
-            if (stageImg && instantFigurine.reveal0sImage) {
-                stageImg.src = instantFigurine.reveal0sImage;
-            }
-            preloadSpinVideos(instantFigurine.id);
-            updateTrackingBadge("success", `衣服识别: ${window.detectedColor} (Gemma 视觉分析中)`);
-
-            // 2. GEMMA 4 VLM VISION RECOGNITION (Vision-Language Model Background Classification)
-            if (window.isVlmMatching) return;
-            window.isVlmMatching = true;
-
-            try {
-                const hiddenCanvas = document.createElement('canvas');
-                hiddenCanvas.width = 256;
-                hiddenCanvas.height = 256;
-                const ctx = hiddenCanvas.getContext('2d');
-                ctx.translate(hiddenCanvas.width, 0);
-                ctx.scale(-1, 1);
-                ctx.drawImage(webcamElement, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
-                const base64Image = hiddenCanvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-                const useLocalAI = document.getElementById('useLocalAI')?.checked ?? true;
-                
-                const result = await classifyColorWithVLM(base64Image, useLocalAI);
-                if (result && result.mappedColor) {
-                    console.log(`[Gemma Vision 🦙] Gemma AI vision matched color: "${result.mappedColor}" (Raw: "${result.rawText}")`);
-                    window.detectedColor = result.mappedColor;
-                    const refinedFigurine = matchFigurineByColor(window.detectedColor);
-                    window.matchedFigurineId = refinedFigurine.id;
-                    updateMuseumInfoCard(refinedFigurine);
-                    if (stageImg && refinedFigurine.reveal0sImage) {
-                        stageImg.src = refinedFigurine.reveal0sImage;
-                    }
-                    preloadSpinVideos(refinedFigurine.id);
-                    updateTrackingBadge("success", `Gemma 视觉识别: ${window.detectedColor}`);
-                }
-            } catch (e) {
-                console.log("[Gemma Vision 🦙] Gemma Vision refinement skipped:", e.message);
-            } finally {
-                window.isVlmMatching = false;
-            }
         }
 
         function setAwakenButtonReady(ready, color = null) {
