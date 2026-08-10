@@ -894,18 +894,18 @@
                         
                         // ONLY when curtain.mp4 actually begins rendering active frames:
                         curtainOverlay.onplaying = () => {
-                            // 1. Prepare stage silhouette image directly behind the opening curtain
+                            // 1. Prepare stage silhouette image directly behind the opening curtain (z-25 is ABOVE standby video z-20)
                             if (stageImg) {
                                 stageImg.src = figurine.reveal0sImage;
-                                stageImg.style.zIndex = '15';
-                                stageImg.classList.remove('opacity-0');
+                                stageImg.style.zIndex = '25';
+                                stageImg.classList.remove('opacity-0', 'hidden');
                                 stageImg.classList.add('opacity-100');
                                 stageImg.style.opacity = '1';
-                                console.log(`[State Machine] Staged silhouette 0s image under curtain: ${figurine.reveal0sImage}`);
+                                console.log(`[State Machine] Staged 0s silhouette image at z-25 under curtain: ${figurine.reveal0sImage}`);
                             }
-                            // 2. Simultaneously hide previous standby video with ZERO visual gap
-                            if (playerA) { playerA.pause(); playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
-                            if (playerB) { playerB.pause(); playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
+                            // 2. Simultaneously hide previous standby video
+                            if (playerA) { playerA.pause(); playerA.style.opacity = '0'; playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
+                            if (playerB) { playerB.pause(); playerB.style.opacity = '0'; playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
                         };
                         
                         curtainOverlay.play().catch(e => {
