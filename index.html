@@ -217,23 +217,12 @@
                 <img id="promptDanceImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_dance.png" alt="提示跳舞" />
                 <img id="promptMaterialImg" class="hidden absolute inset-0 w-full h-full object-contain z-30 transition-opacity duration-500 opacity-0 pointer-events-none" src="final_vid/prompt_material.png" alt="提示换材质" />
                 
-                <!-- Outro Cinematic Golden Blessing Card (State: OUTRO_VIDEO End) -->
-                <div id="outroBlessingOverlay" class="hidden absolute inset-x-0 bottom-12 z-40 flex flex-col items-center justify-center p-6 transition-all duration-1000 opacity-0 pointer-events-none">
-                    <div style="background: radial-gradient(ellipse at center, rgba(30, 18, 8, 0.92) 0%, rgba(10, 6, 2, 0.85) 65%, rgba(0,0,0,0) 100%); padding: 24px 60px; display: flex; flex-col; align-items: center; justify-content: center; text-align: center;">
-                        <!-- Classical Tag Header -->
-                        <div class="text-[12px] font-classical tracking-[0.45em] text-amber-400/80 font-bold uppercase mb-2 drop-shadow-[0_2px_8px_rgba(245,158,11,0.6)]">
-                            ✦ 盛唐 · 典藏吉祥 ✦
-                        </div>
-                        
-                        <!-- Main Glowing Calligraphy Text -->
-                        <div id="outroBlessingText" class="font-classical text-2xl md:text-3xl font-black tracking-[0.35em] text-[#fff9e6] drop-shadow-[0_0_25px_rgba(245,158,11,0.9),0_2px_6px_rgba(0,0,0,0.9)] my-1 whitespace-nowrap">
+                <!-- Outro Pure Cinematic Golden Blessing (State: OUTRO_VIDEO End) -->
+                <div id="outroBlessingOverlay" class="hidden absolute inset-x-0 bottom-16 z-40 flex items-center justify-center p-4 transition-all duration-700 opacity-0 pointer-events-none">
+                    <div style="background: radial-gradient(ellipse at center, rgba(15, 10, 5, 0.88) 0%, rgba(5, 3, 1, 0.70) 65%, rgba(0,0,0,0) 100%); padding: 18px 52px; text-align: center;">
+                        <span id="outroBlessingText" class="font-classical text-2xl md:text-3xl font-bold tracking-[0.4em] text-[#fffae6] drop-shadow-[0_0_22px_rgba(245,158,11,0.9),0_2px_5px_rgba(0,0,0,0.95)] whitespace-nowrap">
                             一舞千年 · 余韵绕梁
-                        </div>
-                        
-                        <!-- Vermilion Imperial Seal Stamp -->
-                        <div class="mt-2.5 inline-flex items-center gap-1 px-2.5 py-0.5 border border-red-500/70 bg-red-950/60 rounded text-red-400 font-classical text-[10px] tracking-[0.25em] font-bold shadow-[0_0_12px_rgba(239,68,68,0.4)]">
-                            <span>大唐</span><span>·</span><span>天宝</span>
-                        </div>
+                        </span>
                     </div>
                 </div>
                 
@@ -1550,12 +1539,7 @@
         }
 
         async function triggerSilentBackgroundMatch() {
-            if (window.isVlmMatching) {
-                return;
-            }
-            window.isVlmMatching = true;
-            
-            // 1. INSTANT COMPUTER VISION PIXEL SENSOR (0.005s Instant Detection)
+            // 1. INSTANT COMPUTER VISION TORSO PIXEL SENSOR (0.005s Instant Detection)
             const instantColor = detectDominantTorsoColor(webcamElement, window.mocap?.lastLandmarks);
             window.detectedColor = instantColor;
             
@@ -1569,36 +1553,6 @@
             }
             preloadSpinVideos(instantFigurine.id);
             updateTrackingBadge("success", `衣服识别: ${window.detectedColor} (秒级就绪)`);
-
-            // 2. Parallel VLM refinement
-            try {
-                const hiddenCanvas = document.createElement('canvas');
-                hiddenCanvas.width = 256;
-                hiddenCanvas.height = 256;
-                const ctx = hiddenCanvas.getContext('2d');
-                ctx.translate(hiddenCanvas.width, 0);
-                ctx.scale(-1, 1);
-                ctx.drawImage(webcamElement, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
-                const base64Image = hiddenCanvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-                const useLocalAI = document.getElementById('useLocalAI')?.checked ?? true;
-                
-                const result = await classifyColorWithVLM(base64Image, useLocalAI);
-                if (result && result.mappedColor) {
-                    window.detectedColor = result.mappedColor;
-                    const refinedFigurine = matchFigurineByColor(window.detectedColor);
-                    window.matchedFigurineId = refinedFigurine.id;
-                    updateMuseumInfoCard(refinedFigurine);
-                    if (stageImg && refinedFigurine.reveal0sImage) {
-                        stageImg.src = refinedFigurine.reveal0sImage;
-                    }
-                    preloadSpinVideos(refinedFigurine.id);
-                    console.log("[AI Match] Refined VLM color:", window.detectedColor);
-                }
-            } catch (e) {
-                console.log("[AI Match] VLM skipped, keeping instant color:", window.detectedColor);
-            } finally {
-                window.isVlmMatching = false;
-            }
         }
 
         function setAwakenButtonReady(ready, color = null) {
