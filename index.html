@@ -858,20 +858,6 @@
             const curtainOverlay = document.getElementById('curtainOverlayPlayer');
             const playerA = document.getElementById('videoPlayerA');
             const playerB = document.getElementById('videoPlayerB');
-            
-            // 1. Immediately pause & hide standby video so it does not interfere or double-expose
-            if (playerA) { playerA.pause(); playerA.style.opacity = '0'; playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
-            if (playerB) { playerB.pause(); playerB.style.opacity = '0'; playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
-
-            // 2. Pre-stage 0s silhouette image directly behind curtain (z-25 is ABOVE standby video z-20)
-            if (stageImg) {
-                stageImg.src = figurine.reveal0sImage;
-                stageImg.style.zIndex = '25';
-                stageImg.classList.remove('opacity-0', 'hidden');
-                stageImg.classList.add('opacity-100');
-                stageImg.style.opacity = '1';
-                console.log(`[State Machine] Staged 0s silhouette image at z-25 under curtain: ${figurine.reveal0sImage}`);
-            }
 
             if (curtainOverlay) {
                 if (!curtainOverlay.src || !curtainOverlay.src.includes("video/curtain.mp4")) {
@@ -886,6 +872,23 @@
                 try {
                     await new Promise((resolve) => {
                         curtainOverlay.onended = resolve;
+                        
+                        // ONLY when curtain.mp4 actually begins rendering active frames (closed curtain covers stage):
+                        curtainOverlay.onplaying = () => {
+                            // 1. Seamlessly stage 0s silhouette image directly behind the opening curtain
+                            if (stageImg) {
+                                stageImg.src = figurine.reveal0sImage;
+                                stageImg.style.zIndex = '25';
+                                stageImg.classList.remove('opacity-0', 'hidden');
+                                stageImg.classList.add('opacity-100');
+                                stageImg.style.opacity = '1';
+                                console.log(`[State Machine] Staged 0s silhouette image at z-25 under opening curtain: ${figurine.reveal0sImage}`);
+                            }
+                            // 2. Simultaneously hide previous standby video underneath
+                            if (playerA) { playerA.pause(); playerA.style.opacity = '0'; playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
+                            if (playerB) { playerB.pause(); playerB.style.opacity = '0'; playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
+                        };
+
                         curtainOverlay.play().catch(e => {
                             console.warn("curtain overlay play failed:", e);
                             resolve();
