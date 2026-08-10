@@ -481,77 +481,82 @@ class MotionCaptureEngine {
                 const shoulderY = (lm[11] && lm[12]) ? (lm[11].y + lm[12].y) / 2 : 0.5;
                 const shoulderDist = (lm[11] && lm[12]) ? Math.abs(lm[11].x - lm[12].x) : 0.15;
                 
-                // Dynamically calculate belly height using hips if available, otherwise fallback to shoulder proportions
                 let hipY = 0.8;
                 if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
                 else hipY = shoulderY + shoulderDist * 2.5;
-                
-                const bellyY = shoulderY + (hipY - shoulderY) * 0.7; 
 
-                // Wrists must be lifted above the belly button. When standing idly, wrists are at/below hips.
-                const handsLifted = (lm[15] && lm[15].y < bellyY) || (lm[16] && lm[16].y < bellyY);
-                
-                if (handsLifted) {
-                    // 1. Check elbows (for an embrace, elbows stick out wide)
-                    if (hasLandmarks([11, 12, 13, 14])) {
-                        const elbowDist = Math.abs(lm[13].x - lm[14].x);
-                        if (elbowDist > shoulderDist * 1.5) isSpread = true; 
-                    }
+                // Strict check for spreading arms beyond shoulder width
+                if (hasLandmarks([11, 12, 15, 16])) {
+                    const wristDist = Math.abs(lm[15].x - lm[16].x);
                     
-                    // 2. Check wrists (for horizontal spread)
-                    if (!isSpread && hasLandmarks([11, 12, 15, 16])) {
-                        const wristDist = Math.abs(lm[15].x - lm[16].x);
-                        if (wristDist > shoulderDist * 1.8) isSpread = true; 
+                    // 1. Both wrists must be lifted between shoulders and hips
+                    const wristsLifted = (lm[15].y < hipY) && (lm[16].y < hipY) && 
+                                         (lm[15].y > (shoulderY - 0.35)) && (lm[16].y > (shoulderY - 0.35));
+                    
+                    // 2. Left wrist extends to the left beyond left shoulder
+                    const leftExtended = lm[15].x < (lm[11].x - 0.25 * shoulderDist);
+                    
+                    // 3. Right wrist extends to the right beyond right shoulder
+                    const rightExtended = lm[16].x > (lm[12].x + 0.25 * shoulderDist);
+                    
+                    // 4. Total span must be significantly wider than shoulders (>= 2.0x shoulder width)
+                    const spanWide = wristDist >= (shoulderDist * 2.0);
+                    
+                    if (wristsLifted && leftExtended && rightExtended && spanWide) {
+                        isSpread = true;
                     }
                 }
                 
                 if (isSpread) {
+                    this.isCurrentlySpreadingArms = true;
                     if (!this.matchStartTime) {
                         this.matchStartTime = Date.now();
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `姿势契合！保持住... (Hold pose...)`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `张开双臂确认中... (Hold spread arms)`);
                     } else {
                         const duration = Date.now() - this.matchStartTime;
-                        const progress = Math.min(100, Math.round((duration / 400) * 100)); // Fast 400ms trigger
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `时空共振中: ${progress}%`);
+                        const progress = Math.min(100, Math.round((duration / 800) * 100)); // 800ms deliberate hold
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `材质变换蓄力: ${progress}%`);
                         
-                        if (duration >= 400) { 
+                        if (duration >= 800) { 
                             this.matchStartTime = null;
                             this.isPoseTriggerMode = false;
                             if (this.onPoseSuccess) this.onPoseSuccess(this.activePoseKey);
                         }
                     }
                 } else {
+                    this.isCurrentlySpreadingArms = false;
                     if (this.matchStartTime) {
                         this.matchStartTime = null;
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请重新拉开双臂`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `请张开双臂并超过肩宽`);
                     }
                 }
                 return; // Override standard angle scoring
             }
 
-            // --- ULTRA-ROBUST RAISE HANDS (optimal_1) OVERRIDE ---
+            // --- STRICT RAISE ONE HAND (optimal_1) ---
             if (this.activePoseKey === 'optimal_1') {
                 let isRaised = false;
                 
-                // Strictly check if LEFT wrist (landmark 15) is raised above left shoulder (landmark 11)
-                if (hasLandmarks([15, 11]) && lm[15].y < lm[11].y) {
-                    isRaised = true; // Left hand up
-                } 
-                // Fallback to left elbow
-                else if (hasLandmarks([13, 11]) && lm[13].y < lm[11].y) {
-                    isRaised = true; // Left elbow up
+                // Strictly check:
+                // 1. LEFT wrist (15) is significantly above LEFT shoulder (11) by at least 0.08 normalized height
+                // 2. RIGHT wrist (16) is NOT raised (stays below or near right shoulder 12)
+                const leftArmRaised = hasLandmarks([15, 11]) && (lm[15].y < lm[11].y - 0.08);
+                const rightArmDown = hasLandmarks([16, 12]) ? (lm[16].y > lm[12].y - 0.02) : true;
+                
+                if (leftArmRaised && rightArmDown) {
+                    isRaised = true;
                 }
                 
                 if (isRaised) {
                     if (!this.matchStartTime) {
                         this.matchStartTime = Date.now();
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `识别到举左手！保持住...`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `识别到举起左手！请保持...`);
                     } else {
                         const duration = Date.now() - this.matchStartTime;
-                        const progress = Math.min(100, Math.round((duration / 400) * 100)); // Fast 400ms trigger
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `时空共振中: ${progress}%`);
+                        const progress = Math.min(100, Math.round((duration / 800) * 100)); // 800ms deliberate hold
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `动作契合中: ${progress}%`);
                         
-                        if (duration >= 400) { 
+                        if (duration >= 800) { 
                             this.matchStartTime = null;
                             this.isPoseTriggerMode = false;
                             if (this.onPoseSuccess) this.onPoseSuccess(this.activePoseKey);
@@ -560,7 +565,7 @@ class MotionCaptureEngine {
                 } else {
                     if (this.matchStartTime) {
                         this.matchStartTime = null;
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请举起左手`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请举起左手并保持片刻`);
                     }
                 }
                 return; // Override standard angle scoring
