@@ -318,9 +318,8 @@ class MotionCaptureEngine {
         
         this.absenceStartTime = null;
         
-        const landmarks = (results.poseWorldLandmarks && results.poseWorldLandmarks.length >= 29) 
-                          ? results.poseWorldLandmarks 
-                          : results.poseLandmarks;
+        // Always use 2D normalized screen-space landmarks for pose and gesture matching!
+        const landmarks = results.poseLandmarks || results.poseWorldLandmarks;
         
         if (this.isPoseTriggerMode) {
             this.evaluatePoseMatching(landmarks);
@@ -474,35 +473,35 @@ class MotionCaptureEngine {
                 return indices.every(idx => lm[idx] !== undefined && lm[idx] !== null);
             };
 
-            // --- ULTRA-ROBUST SPREAD ARMS OVERRIDE ---
+            // --- ULTRA-ROBUST SPREAD ARMS (spread_arms) ---
             if (this.activePoseKey === 'spread_arms') {
                 let isSpread = false;
                 
-                const shoulderY = (lm[11] && lm[12]) ? (lm[11].y + lm[12].y) / 2 : 0.5;
-                const shoulderDist = (lm[11] && lm[12]) ? Math.abs(lm[11].x - lm[12].x) : 0.15;
-                
-                let hipY = 0.8;
-                if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
-                else hipY = shoulderY + shoulderDist * 2.5;
-
-                // Strict check for spreading arms beyond shoulder width
                 if (hasLandmarks([11, 12, 15, 16])) {
+                    const shoulderDist = Math.abs(lm[11].x - lm[12].x);
                     const wristDist = Math.abs(lm[15].x - lm[16].x);
                     
-                    // 1. Both wrists must be lifted between shoulders and hips
-                    const wristsLifted = (lm[15].y < hipY) && (lm[16].y < hipY) && 
-                                         (lm[15].y > (shoulderY - 0.35)) && (lm[16].y > (shoulderY - 0.35));
+                    const shoulderY = (lm[11].y + lm[12].y) / 2;
+                    let hipY = 0.85;
+                    if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
                     
-                    // 2. Left wrist extends to the left beyond left shoulder
-                    const leftExtended = lm[15].x < (lm[11].x - 0.25 * shoulderDist);
+                    // 1. Both wrists must be lifted (above hips, and not way above head)
+                    const wristsLifted = (lm[15].y < hipY + 0.05) && (lm[16].y < hipY + 0.05) && 
+                                         (lm[15].y > (shoulderY - 0.45)) && (lm[16].y > (shoulderY - 0.45));
                     
-                    // 3. Right wrist extends to the right beyond right shoulder
-                    const rightExtended = lm[16].x > (lm[12].x + 0.25 * shoulderDist);
+                    // 2. Both wrists extend outwards beyond shoulders (mirror-invariant min/max)
+                    const minShoulderX = Math.min(lm[11].x, lm[12].x);
+                    const maxShoulderX = Math.max(lm[11].x, lm[12].x);
+                    const minWristX = Math.min(lm[15].x, lm[16].x);
+                    const maxWristX = Math.max(lm[15].x, lm[16].x);
                     
-                    // 4. Total span must be significantly wider than shoulders (>= 2.0x shoulder width)
-                    const spanWide = wristDist >= (shoulderDist * 2.0);
+                    const spreadOutwards = (minWristX < minShoulderX - 0.10 * shoulderDist) && 
+                                           (maxWristX > maxShoulderX + 0.10 * shoulderDist);
                     
-                    if (wristsLifted && leftExtended && rightExtended && spanWide) {
+                    // 3. Total wrist span wider than shoulders (>= 1.5x shoulder width)
+                    const spanWide = wristDist >= (shoulderDist * 1.5);
+                    
+                    if (wristsLifted && spreadOutwards && spanWide) {
                         isSpread = true;
                     }
                 }
@@ -511,13 +510,13 @@ class MotionCaptureEngine {
                     this.isCurrentlySpreadingArms = true;
                     if (!this.matchStartTime) {
                         this.matchStartTime = Date.now();
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `张开双臂确认中... (Hold spread arms)`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `张开双臂蓄力中... 请保持`);
                     } else {
                         const duration = Date.now() - this.matchStartTime;
-                        const progress = Math.min(100, Math.round((duration / 800) * 100)); // 800ms deliberate hold
+                        const progress = Math.min(100, Math.round((duration / 600) * 100)); // 600ms hold
                         if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `材质变换蓄力: ${progress}%`);
                         
-                        if (duration >= 800) { 
+                        if (duration >= 600) { 
                             this.matchStartTime = null;
                             this.isPoseTriggerMode = false;
                             if (this.onPoseSuccess) this.onPoseSuccess(this.activePoseKey);
@@ -720,28 +719,32 @@ class MotionCaptureEngine {
         const pR = lm[12]; // Right Shoulder
 
         // ================= 1. 360-DEGREE SPIN DETECTION & CONTINUOUS SPREAD ARMS =================
-        if (lm) {
+        if (lm && lm[11] && lm[12] && lm[15] && lm[16]) {
             let isSpread = false;
-            const shoulderY = (lm[11] && lm[12]) ? (lm[11].y + lm[12].y) / 2 : 0.5;
-            const shoulderDist = (lm[11] && lm[12]) ? Math.abs(lm[11].x - lm[12].x) : 0.15;
+            const shoulderDist = Math.abs(lm[11].x - lm[12].x);
+            const wristDist = Math.abs(lm[15].x - lm[16].x);
             
-            let hipY = 0.8;
+            const shoulderY = (lm[11].y + lm[12].y) / 2;
+            let hipY = 0.85;
             if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
-            else hipY = shoulderY + shoulderDist * 2.5;
             
-            const bellyY = shoulderY + (hipY - shoulderY) * 0.7;
-            const handsLifted = (lm[15] && lm[15].y < bellyY) || (lm[16] && lm[16].y < bellyY);
+            const wristsLifted = (lm[15].y < hipY + 0.05) && (lm[16].y < hipY + 0.05) && 
+                                 (lm[15].y > (shoulderY - 0.45)) && (lm[16].y > (shoulderY - 0.45));
             
-            if (handsLifted) {
-                if (lm[11] && lm[12] && lm[13] && lm[14]) {
-                    const elbowDist = Math.abs(lm[13].x - lm[14].x);
-                    if (elbowDist > shoulderDist * 1.5) isSpread = true;
-                }
-                if (!isSpread && lm[11] && lm[12] && lm[15] && lm[16]) {
-                    const wristDist = Math.abs(lm[15].x - lm[16].x);
-                    if (wristDist > shoulderDist * 1.8) isSpread = true;
-                }
+            const minShoulderX = Math.min(lm[11].x, lm[12].x);
+            const maxShoulderX = Math.max(lm[11].x, lm[12].x);
+            const minWristX = Math.min(lm[15].x, lm[16].x);
+            const maxWristX = Math.max(lm[15].x, lm[16].x);
+            
+            const spreadOutwards = (minWristX < minShoulderX - 0.10 * shoulderDist) && 
+                                   (maxWristX > maxShoulderX + 0.10 * shoulderDist);
+            
+            const spanWide = wristDist >= (shoulderDist * 1.5);
+            
+            if (wristsLifted && spreadOutwards && spanWide) {
+                isSpread = true;
             }
+            
             this.isCurrentlySpreadingArms = isSpread;
             if (isSpread) {
                 this.lastSpreadArmsTime = Date.now();
