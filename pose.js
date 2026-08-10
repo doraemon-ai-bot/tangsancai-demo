@@ -233,6 +233,28 @@ class MotionCaptureEngine {
         this.isTracking = false;
         console.log("Webcam tracking stopped.");
     }
+
+    /**
+     * Pauses tracking
+     */
+    pause() {
+        if (this.cameraHelper) {
+            try { this.cameraHelper.stop(); } catch(e){}
+        }
+        this.isTracking = false;
+        console.log("[Mocap Engine] Tracking paused.");
+    }
+
+    /**
+     * Resumes tracking
+     */
+    resume() {
+        if (this.videoElement && this.canvasElement && !this.isTracking) {
+            console.log("[Mocap Engine] Resuming tracking...");
+            this.start(this.videoElement, this.canvasElement);
+        }
+    }
+
     
     /**
      * Evaluates whether key landmarks indicate a real human is present in the frame

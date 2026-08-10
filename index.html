@@ -935,7 +935,7 @@
                 mocap.isPoseTriggerMode = false;
                 mocap.spinState = 0;
                 mocap.isStill = false;
-                mocap.resume();
+                if (mocap && typeof mocap.resume === "function") mocap.resume();
             }
 
             // 6. Reset matched figurine to default
@@ -958,7 +958,7 @@
             console.log("[State Machine] Starting cinematic flow -> INTRO_REVEAL");
             currentState = AppState.INTRO_REVEAL;
             window.isColorLocked = true; // Lock color prediction so late background samples cannot overwrite matched color!
-            if (mocap) mocap.pause();
+            if (mocap && typeof mocap.pause === "function") mocap.pause();
             
             // Hide start overlay so it's not clickable anymore
             const startOverlay = document.getElementById('startOverlay');
@@ -990,7 +990,7 @@
             // Play intro_continue.mp4 directly after standby video
             console.log("[State Machine] Playing intro_continue.mp4 after standby loop...");
             await playSeamlessVideo("video/intro_continue.mp4", false, 'normal');
-            if (mocap) mocap.resume();
+            if (mocap) if (mocap && typeof mocap.resume === "function") mocap.resume();
             
             // --- 阶段 2: 帘子拉开完毕 -> 保持 stageImg 0s 图片在 z-25 垫底，由 reveal 出场视频 0ms 无缝接管（决不黑屏）---
             const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
