@@ -1171,15 +1171,20 @@
                     triggerSilentBackgroundMatch().catch(e => console.error("[State Machine] Match failed:", e));
 
                     if (!window.presenceTimer) {
-                        console.log("[State Machine] User detected! Starting 1.0s fast presence confirmation...");
+                        console.log("[State Machine] Real human detected! Starting 1.5s presence confirmation...");
                         
                         window.presenceTimer = setTimeout(() => {
                             if (currentState === AppState.STANDBY_LOOP) {
-                                console.log("[State Machine] User presence confirmed (1.0s)! Auto-starting cinematic flow.");
-                                startCinematicFlow();
+                                // Confirm user is STILL present after 1.5s (prevents false background noise triggers)
+                                if (mocap && !mocap.isAbsent) {
+                                    console.log("[State Machine] User presence confirmed (1.5s)! Auto-starting cinematic flow.");
+                                    startCinematicFlow();
+                                } else {
+                                    console.log("[State Machine] False trigger avoided: user is absent before 1.5s confirmation.");
+                                }
                             }
                             window.presenceTimer = null;
-                        }, 1000);
+                        }, 1500);
                     }
                 }
             };
