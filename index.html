@@ -685,8 +685,9 @@
                 
                 const cleanSrc = src.split('?')[0];
                 const versionedSrc = src.includes('?') ? src : `${src}?v=20260810_fresh`;
-                if (!nextPlayer.src || !nextPlayer.src.includes(cleanSrc)) {
+                if (!nextPlayer.src || !nextPlayer.src.includes(cleanSrc) || nextPlayer.error || nextPlayer.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
                     nextPlayer.src = versionedSrc;
+                    nextPlayer.load();
                 }
                 nextPlayer.loop = loop;
                 nextPlayer.style.mixBlendMode = blendMode;
@@ -903,16 +904,12 @@
                         curtainOverlay.onplaying = () => {
                             curtainOverlay.style.opacity = '1';
                             
-                            // Smoothly fade out previous standby video underneath over 500ms
-                            if (playerA) { 
-                                playerA.style.transition = 'opacity 500ms ease-in-out';
-                                playerA.style.opacity = '0'; 
-                                setTimeout(() => { try { playerA.pause(); } catch(e){} }, 500);
-                            }
-                            if (playerB) { 
-                                playerB.style.transition = 'opacity 500ms ease-in-out';
-                                playerB.style.opacity = '0'; 
-                                setTimeout(() => { try { playerB.pause(); } catch(e){} }, 500);
+                            // Smoothly fade out ONLY active standby video underneath over 500ms
+                            const standbyPlayer = activePlayer;
+                            if (standbyPlayer) { 
+                                standbyPlayer.style.transition = 'opacity 500ms ease-in-out';
+                                standbyPlayer.style.opacity = '0'; 
+                                setTimeout(() => { try { standbyPlayer.pause(); } catch(e){} }, 500);
                             }
                         };
 
