@@ -222,7 +222,7 @@
                 
                 <!-- Outro Pure White Center Blessing (State: OUTRO_VIDEO End) -->
                 <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center pointer-events-none transition-opacity duration-1000 opacity-0">
-                    <span id="outroBlessingText" class="font-calligraphy text-5xl md:text-7xl font-bold tracking-[0.3em] text-white drop-shadow-[0_0_40px_rgba(255,255,255,1.0),0_4px_30px_rgba(0,0,0,0.95)] text-center whitespace-nowrap select-none">
+                    <span id="outroBlessingText" class="font-calligraphy text-2xl md:text-4xl font-medium tracking-[0.25em] text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.9),0_2px_15px_rgba(0,0,0,0.8)] text-center max-w-[80vw] leading-relaxed select-none">
                         舞动千年，华彩乐章
                     </span>
                 </div>
@@ -997,44 +997,31 @@
         }
 
         /**
-         * Plays curtain.mp4 in reverse to close the curtain over the stage
+         * Plays video/curtain_close.mp4 to close the curtain over the stage with solid blue opacity
          */
-        async function closeCurtainOverlay(durationMs = 3800) {
+        async function closeCurtainOverlay() {
             const curtainOverlay = document.getElementById('curtainOverlayPlayer');
             if (!curtainOverlay) return;
             
-            curtainOverlay.src = "video/curtain.mp4?v=20260810_close";
+            curtainOverlay.src = "video/curtain_close.mp4";
+            curtainOverlay.currentTime = 0;
             curtainOverlay.style.zIndex = '30';
             curtainOverlay.classList.remove('hidden');
-            curtainOverlay.style.mixBlendMode = 'screen';
+            curtainOverlay.style.mixBlendMode = 'normal'; // Normal blend mode renders rich solid curtain closing to full solid opacity
             curtainOverlay.style.opacity = '1';
             
-            await new Promise((resolve) => {
-                if (curtainOverlay.readyState >= 1) resolve();
-                else curtainOverlay.onloadedmetadata = resolve;
-            });
-            
-            const startVidTime = Math.min(3.8, curtainOverlay.duration || 3.8);
-            const startTime = performance.now();
-            
-            return new Promise((resolve) => {
-                function step(now) {
-                    const elapsed = now - startTime;
-                    const progress = Math.min(1.0, elapsed / durationMs);
-                    const targetTime = startVidTime * (1.0 - progress);
-                    try {
-                        curtainOverlay.currentTime = Math.max(0, targetTime);
-                    } catch(e) {}
-                    
-                    if (progress < 1.0) {
-                        requestAnimationFrame(step);
-                    } else {
-                        curtainOverlay.currentTime = 0;
+            try {
+                await new Promise((resolve) => {
+                    curtainOverlay.onended = resolve;
+                    curtainOverlay.play().catch(e => {
+                        console.warn("curtain close play failed:", e);
                         resolve();
-                    }
-                }
-                requestAnimationFrame(step);
-            });
+                    });
+                });
+            } finally {
+                curtainOverlay.classList.add('hidden');
+                curtainOverlay.pause();
+            }
         }
 
         // ================= DYNAMIC GOLD DUST SPARKS & EMBERS CANVAS =================
