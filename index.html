@@ -683,8 +683,9 @@
                 nextPlayer.classList.remove('opacity-100');
                 nextPlayer.classList.add('opacity-0');
                 
+                const cleanSrc = src.split('?')[0];
                 const versionedSrc = src.includes('?') ? src : `${src}?v=20260810_fresh`;
-                if (!nextPlayer.src.includes(src)) {
+                if (!nextPlayer.src || !nextPlayer.src.includes(cleanSrc)) {
                     nextPlayer.src = versionedSrc;
                 }
                 nextPlayer.loop = loop;
@@ -865,12 +866,13 @@
             // PRE-BUFFER REVEAL VIDEO ON INACTIVE PLAYER WHILE CURTAIN OPENS (0ms INSTANT PLAYBACK!)
             const targetPlayer = (activePlayer === playerA) ? playerB : playerA;
             if (targetPlayer && figurine.revealVideo) {
-                if (!targetPlayer.src.includes(figurine.revealVideo)) {
-                    targetPlayer.src = figurine.revealVideo;
+                const cleanSrc = figurine.revealVideo.split('?')[0];
+                if (!targetPlayer.src || !targetPlayer.src.includes(cleanSrc)) {
+                    targetPlayer.src = `${figurine.revealVideo}?v=20260810_fresh`;
+                    targetPlayer.preload = "auto";
+                    targetPlayer.load();
+                    console.log(`[Video Preload 🚀] Pre-buffering reveal video while curtain opens: ${targetPlayer.src} on ${targetPlayer.id}`);
                 }
-                targetPlayer.preload = "auto";
-                targetPlayer.load();
-                console.log(`[Video Preload 🚀] Pre-buffering reveal video while curtain opens: ${figurine.revealVideo} on ${targetPlayer.id}`);
             }
 
             if (curtainOverlay) {
