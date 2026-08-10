@@ -857,9 +857,11 @@
             const stageImg = document.getElementById('stageFigurineImg');
             const curtainOverlay = document.getElementById('curtainOverlayPlayer');
             const playerA = document.getElementById('videoPlayerA');
-            const playerB = document.getElementById('videoPlayerB');
-            
-            // Pre-stage 0s silhouette image directly behind curtain (z-25 is ABOVE standby video z-20)
+            // 1. Immediately pause & hide standby video so it does not interfere or double-expose
+            if (playerA) { playerA.pause(); playerA.style.opacity = '0'; playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
+            if (playerB) { playerB.pause(); playerB.style.opacity = '0'; playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
+
+            // 2. Pre-stage 0s silhouette image directly behind curtain (z-25 is ABOVE standby video z-20)
             if (stageImg) {
                 stageImg.src = figurine.reveal0sImage;
                 stageImg.style.zIndex = '25';
@@ -876,20 +878,12 @@
                 curtainOverlay.currentTime = 0;
                 curtainOverlay.style.zIndex = '30';
                 curtainOverlay.classList.remove('hidden');
-                curtainOverlay.style.mixBlendMode = 'normal'; // Normal blend mode prevents screen brightening double-exposure
+                curtainOverlay.style.mixBlendMode = 'screen'; // Screen mode makes black background transparent so stageImg at z-25 shows cleanly!
                 curtainOverlay.style.opacity = '1';
                 
                 try {
                     await new Promise((resolve) => {
                         curtainOverlay.onended = resolve;
-                        
-                        // ONLY when curtain.mp4 actually begins rendering active frames:
-                        curtainOverlay.onplaying = () => {
-                            // Hide previous standby video cleanly
-                            if (playerA) { playerA.pause(); playerA.style.opacity = '0'; playerA.classList.remove('opacity-100'); playerA.classList.add('opacity-0'); }
-                            if (playerB) { playerB.pause(); playerB.style.opacity = '0'; playerB.classList.remove('opacity-100'); playerB.classList.add('opacity-0'); }
-                        };
-                        
                         curtainOverlay.play().catch(e => {
                             console.warn("curtain overlay play failed:", e);
                             resolve();
@@ -906,6 +900,12 @@
             // --- 阶段 2: 帘子拉开完毕 -> 保持 stageImg 0s 图片在 z-25 垫底，由 reveal 出场视频 0ms 无缝接管（决不黑屏）---
             const finalMatchedId = window.matchedFigurineId || matchedId || 'white';
             const finalFigurine = FIGURINES_DB[finalMatchedId] || FIGURINES_DB['white'];
+            
+            if (stageImg) {
+                stageImg.src = finalFigurine.reveal0sImage;
+                stageImg.style.opacity = '1';
+                stageImg.style.zIndex = '25';
+            }
             console.log(`[State Machine] Curtain finished -> Playing reveal video: ${finalFigurine.revealVideo} (Color: ${finalFigurine.tags?.color || '白'})`);
             
             const showPromptCallback = () => {
