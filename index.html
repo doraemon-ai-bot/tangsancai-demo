@@ -1549,16 +1549,16 @@
                     stream: false,
                     options: {
                         temperature: 0.0,
-                        num_predict: 350
+                        num_predict: 10
                     }
                 };
                 
-                console.log(`[Gemma Vision 🦙] Sending vision classification request to ${modelName}...`);
+                console.log(`[Gemma Vision 🦙] Sending vision classification request to ${modelName} (8.0s timeout)...`);
                 const response = await fetchWithTimeout(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }, 3500); // 3.5s fast timeout to prevent blocking video decoder threads
+                }, 8000); // 8.0s timeout per user directive
                 
                 if (!response.ok) throw new Error(`Local VLM error: ${response.status} (Model: ${modelName})`);
                 const resJson = await response.json();
