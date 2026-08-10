@@ -222,7 +222,7 @@
                 
                 <!-- Outro Pure White Center Blessing (State: OUTRO_VIDEO End) -->
                 <div id="outroBlessingOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center pointer-events-none transition-opacity duration-1000 opacity-0">
-                    <div id="outroBlessingText" class="font-sans text-3xl md:text-5xl font-normal tracking-[0.2em] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] text-center leading-[1.8] flex flex-col items-center justify-center space-y-2 select-none">
+                    <div id="outroBlessingText" class="font-sans text-xl md:text-3xl font-normal tracking-[0.2em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] text-center leading-[1.8] flex flex-col items-center justify-center space-y-1.5 select-none">
                         <div>舞 动 千 年</div>
                         <div>华 彩 乐 章</div>
                     </div>
@@ -982,17 +982,10 @@
             
             // Pick a random blessing from the 38 custom Tang blessings
             const randomBlessing = BLESSINGS_CUSTOM[Math.floor(Math.random() * BLESSINGS_CUSTOM.length)];
-            console.log(`[State Machine] Outro video started -> Random 1/38 Tang Blessing: "${randomBlessing}"`);
-            
-            // Start playing the main outro video
-            const outroPromise = playSeamlessVideo(outroVid, false, 'normal');
-            
-            // Display pure white centered blessing text overlay with silver particle sparks
             const blessingOverlay = document.getElementById('outroBlessingOverlay');
             const blessingText = document.getElementById('outroBlessingText');
             
             if (blessingOverlay && blessingText) {
-                // Split 8-character blessing (e.g. "舞动千年，华彩乐章") into 2 distinct lines matching user design
                 let line1 = randomBlessing;
                 let line2 = "";
                 if (randomBlessing.includes("，")) {
@@ -1008,25 +1001,57 @@
                     <div class="tracking-[0.35em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] font-normal">${line1.split('').join(' ')}</div>
                     ${line2 ? `<div class="tracking-[0.35em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] font-normal">${line2.split('').join(' ')}</div>` : ''}
                 `;
-                
-                blessingOverlay.classList.remove('hidden');
-                void blessingOverlay.offsetWidth;
-                startBlessingSparks();
-                blessingOverlay.classList.remove('opacity-0');
-                blessingOverlay.classList.add('opacity-100');
             }
-            
-            // Wait for outro video to complete
+
+            let blessingShown = false;
+            let curtainTriggered = false;
+            let currentMonitorPlayer = null;
+
+            // Monitor active player playback time
+            const timeMonitor = () => {
+                if (!currentMonitorPlayer || currentMonitorPlayer.duration <= 0) return;
+                const remaining = currentMonitorPlayer.duration - currentMonitorPlayer.currentTime;
+
+                // 1. Show blessing text ONLY at the last 2.0 seconds of the outro video!
+                if (remaining <= 2.0 && !blessingShown && blessingOverlay) {
+                    blessingShown = true;
+                    console.log(`[State Machine] Outro video last 2s -> Fading in blessing text: "${randomBlessing}"`);
+                    blessingOverlay.classList.remove('hidden');
+                    void blessingOverlay.offsetWidth;
+                    startBlessingSparks();
+                    blessingOverlay.classList.remove('opacity-0');
+                    blessingOverlay.classList.add('opacity-100');
+                }
+
+                // 2. Start closing curtain video AT THE EXACT LAST 1.0 SECOND of the outro video!
+                if (remaining <= 1.0 && !curtainTriggered) {
+                    curtainTriggered = true;
+                    console.log(`[State Machine] Outro video last 1s -> Seamlessly closing blue curtain...`);
+                    closeCurtainOverlay();
+                }
+            };
+
+            const intervalId = setInterval(timeMonitor, 100);
+
             try {
+                const outroPromise = playSeamlessVideo(outroVid, false, 'normal');
+                currentMonitorPlayer = activePlayer;
                 await outroPromise;
             } catch (e) {
                 console.error("[State Machine] Play outro failed:", e);
+            } finally {
+                clearInterval(intervalId);
             }
             
-            // --- 最后的谢幕环节：在祝福语上叠加倒放窗帘视频，实现幕布合拢 ---
-            console.log("[State Machine] Outro video ended -> Closing blue curtain over stage...");
-            await closeCurtainOverlay(3800); // 3.8s smooth curtain closing
-            
+            // Wait for curtain_close.mp4 to complete if it was triggered
+            const curtainOverlay = document.getElementById('curtainOverlayPlayer');
+            if (curtainOverlay && !curtainOverlay.paused && !curtainOverlay.ended) {
+                await new Promise((resolve) => {
+                    curtainOverlay.onended = resolve;
+                    setTimeout(resolve, 3800); // Safety fallback
+                });
+            }
+
             if (blessingOverlay) {
                 blessingOverlay.classList.remove('opacity-100');
                 blessingOverlay.classList.add('opacity-0');
