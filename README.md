@@ -19,9 +19,7 @@
 -->
 
 <div align="center">
-  <video src="static/FinalDemo.mp4" controls width="80%">
-    Your browser does not support the video tag.
-  </video>
+  <img src="static/FinalDemo.gif" alt="乐舞胡旋演示" width="80%" />
   <p><em>▲ 乐舞胡旋：AI 穿搭感应与 3D 动作捕捉交互演示</em></p>
 </div>
 
