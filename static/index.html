@@ -817,8 +817,9 @@
                 nextPlayer.classList.add('opacity-100');
                 nextPlayer.style.opacity = '1';
                 
+                const cacheBustSrc = src + (src.includes('?') ? '&' : '?') + 'v=20260818_v3';
                 if (!nextPlayer.src || !nextPlayer.src.includes(src) || nextPlayer.error || nextPlayer.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
-                    nextPlayer.src = src;
+                    nextPlayer.src = cacheBustSrc;
                     nextPlayer.load();
                 } else {
                     try { nextPlayer.currentTime = 0; } catch(e){}
