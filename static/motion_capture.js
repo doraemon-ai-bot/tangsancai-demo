@@ -40,6 +40,7 @@ class MotionCaptureEngine {
         this.absenceStartTime = null; // Timer for user leaving frame
         this.isAbsent = true;         // Absence state flag (starts true so first detection triggers return)
         this.hasStarted = false;      // Track first valid frame
+        this.isPaused = false;        // CPU Saver: pause pose inference when not in interaction states
 
         
         // Callbacks to communicate with index.html frontend
@@ -116,8 +117,8 @@ class MotionCaptureEngine {
                 smoothLandmarks: true,
                 enableSegmentation: false,
                 smoothSegmentation: false,
-                minDetectionConfidence: 0.30, // More lenient
-                minTrackingConfidence: 0.30
+                minDetectionConfidence: 0.40, // More lenient
+                minTrackingConfidence: 0.40
             });
             console.log("[Diag - initMediaPipe] Step 3: after setOptions");
             
@@ -168,7 +169,7 @@ class MotionCaptureEngine {
             try {
                 this.cameraHelper = new Camera(this.video, {
                     onFrame: async () => {
-                        if (this.isTracking && this.isModelReady && this.pose) {
+                        if (this.isTracking && this.isModelReady && this.pose && !this.isPaused) {
                             if (!this.firstFrameSent) {
                                 console.log("[Mocap Engine] ✅ First frame sent to MediaPipe Pose!");
                                 this.firstFrameSent = true;
@@ -233,39 +234,40 @@ class MotionCaptureEngine {
         this.isTracking = false;
         console.log("Webcam tracking stopped.");
     }
-
-    /**
-     * Pauses tracking
-     */
+    
     pause() {
-        if (this.cameraHelper) {
-            try { this.cameraHelper.stop(); } catch(e){}
-        }
-        this.isTracking = false;
-        console.log("[Mocap Engine] Tracking paused.");
+        console.log("[Mocap Engine] Pausing pose tracking (skipping inference)...");
+        this.isPaused = true;
     }
-
-    /**
-     * Resumes tracking
-     */
+    
     resume() {
-        if (this.videoElement && this.canvasElement && !this.isTracking) {
-            console.log("[Mocap Engine] Resuming tracking...");
-            this.start(this.videoElement, this.canvasElement);
-        }
+        console.log("[Mocap Engine] Resuming pose tracking...");
+        this.isPaused = false;
+        this.stillStartTime = null;
+        this.absenceStartTime = null;
     }
-
     
     /**
      * Evaluates whether key landmarks indicate a real human is present in the frame
      */
     isHumanPresent(results) {
-        if (!results || !results.poseLandmarks || results.poseLandmarks.length < 29) {
+        if (!this.logCounter) this.logCounter = 0;
+        this.logCounter++;
+        const shouldLog = (this.logCounter % 60 === 0);
+
+        if (!results || !results.poseLandmarks) {
+            if (shouldLog) console.log("[Mocap Debug] No poseLandmarks returned by MediaPipe");
+            return false;
+        }
+        if (results.poseLandmarks.length < 29) {
+            if (shouldLog) console.log("[Mocap Debug] poseLandmarks length too small:", results.poseLandmarks.length);
             return false;
         }
         const lm = results.poseLandmarks;
-        // Key landmarks: Left/Right Shoulder, Left/Right Hip
-        if (!lm[11] || !lm[12] || !lm[0]) return false;
+        if (!lm[11] || !lm[12] || !lm[0]) {
+            if (shouldLog) console.log("[Mocap Debug] Missing key landmarks (0, 11, 12):", !!lm[0], !!lm[11], !!lm[12]);
+            return false;
+        }
         
         const keyIndices = [0, 11, 12, 23, 24]; // Nose, Shoulders and Hips
         let totalVis = 0;
@@ -276,12 +278,18 @@ class MotionCaptureEngine {
                 count++;
             }
         }
-        if (count < 3) return false;
+        if (count < 3) {
+            if (shouldLog) console.log("[Mocap Debug] Count of visible key landmarks too low:", count);
+            return false;
+        }
         const avgVis = totalVis / count;
         const shoulderDist = Math.abs(lm[11].x - lm[12].x);
         
-        // Require face & shoulders to have high visibility (>=0.75) and person to be close enough (shoulderDist >= 0.10)
-        return avgVis >= 0.75 && shoulderDist >= 0.10 && (lm[11].visibility >= 0.70 && lm[12].visibility >= 0.70);
+        const ok = avgVis >= 0.75 && shoulderDist >= 0.10 && (lm[11].visibility >= 0.70 && lm[12].visibility >= 0.70);
+        if (!ok && shouldLog) {
+            console.log(`[Mocap Debug] Human fail details: avgVis=${avgVis.toFixed(2)} (req>=0.75), shoulderDist=${shoulderDist.toFixed(3)} (req>=0.10), leftShVis=${lm[11].visibility?.toFixed(2)} (req>=0.70), rightShVis=${lm[12].visibility?.toFixed(2)} (req>=0.70)`);
+        }
+        return ok;
     }
 
     /**
@@ -291,6 +299,14 @@ class MotionCaptureEngine {
         if (!this.firstResultReceived) {
             console.log("[Mocap Engine] ✅ First result RECEIVED from MediaPipe Pose!");
             this.firstResultReceived = true;
+        }
+
+        const landmarks = results.poseLandmarks || results.poseWorldLandmarks;
+
+        // Run interactive state tracking (like spin detection) as long as we have raw landmarks,
+        // even if visibility confidence is temporarily low (e.g. during a fast spin where back is turned)
+        if (landmarks) {
+            this.updateInteractiveStates(landmarks);
         }
 
         const humanPresent = this.isHumanPresent(results);
@@ -310,7 +326,7 @@ class MotionCaptureEngine {
             const now = Date.now();
             if (!this.absenceStartTime) {
                 this.absenceStartTime = now;
-            } else if (now - this.absenceStartTime > 1000) { // 1.0 seconds absence
+            } else if (now - this.absenceStartTime > 5000) { // 5.0 seconds absence
                 if (!this.isAbsent) {
                     this.isAbsent = true;
                     console.log("[Mocap Engine] User is ABSENT (no human detected)");
@@ -346,9 +362,6 @@ class MotionCaptureEngine {
         
         this.absenceStartTime = null;
         
-        // Always use 2D normalized screen-space landmarks for pose and gesture matching!
-        const landmarks = results.poseLandmarks || results.poseWorldLandmarks;
-        
         if (this.isPoseTriggerMode) {
             this.evaluatePoseMatching(landmarks);
         } else {
@@ -356,9 +369,6 @@ class MotionCaptureEngine {
                 window.updateTrackingBadge("success", "正在实时动捕中...");
             }
         }
-        
-        // Track interactive gestures (spins, stillness) in real-time on every frame
-        this.updateInteractiveStates(landmarks);
     }
     
     /**
@@ -505,43 +515,33 @@ class MotionCaptureEngine {
             if (this.activePoseKey === 'spread_arms') {
                 let isSpread = false;
                 
-                if (hasLandmarks([11, 12, 13, 14, 15, 16])) {
-                    const shoulderDist = Math.abs(lm[11].x - lm[12].x);
-                    const wristDist = Math.abs(lm[15].x - lm[16].x);
-                    const shoulderY = (lm[11].y + lm[12].y) / 2;
+                let leftArmRaised = false;
+                if (hasLandmarks([11, 15])) {
+                    const shoulderY = (lm[11].y + (hasLandmarks([12]) ? lm[12].y : lm[11].y)) / 2;
                     let hipY = 0.80;
-                    if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
-                    
-                    // 1. Both wrists must be lifted up to chest/shoulder level (above mid-torso, NOT hanging down at sides!)
+                    if (lm[23]) hipY = lm[23].y;
                     const midTorsoY = (shoulderY + hipY) / 2;
-                    const wristsLifted = (lm[15].y < midTorsoY) && (lm[16].y < midTorsoY) && 
-                                         (lm[15].y > (shoulderY - 0.40)) && (lm[16].y > (shoulderY - 0.40));
-                    
-                    // 2. Both elbows must also be raised up away from body sides
-                    const elbowsLifted = (lm[13].y < hipY - 0.05) && (lm[14].y < hipY - 0.05);
-                    
-                    // 3. Both wrists must extend significantly outwards beyond shoulders laterally
-                    const minShoulderX = Math.min(lm[11].x, lm[12].x);
-                    const maxShoulderX = Math.max(lm[11].x, lm[12].x);
-                    const minWristX = Math.min(lm[15].x, lm[16].x);
-                    const maxWristX = Math.max(lm[15].x, lm[16].x);
-                    
-                    const spreadOutwards = (minWristX < minShoulderX - 0.20 * shoulderDist) && 
-                                           (maxWristX > maxShoulderX + 0.20 * shoulderDist);
-                    
-                    // 4. Total wrist span must be very wide (>= 1.7x shoulder width)
-                    const spanWide = wristDist >= (shoulderDist * 1.7);
-                    
-                    if (wristsLifted && elbowsLifted && spreadOutwards && spanWide) {
-                        isSpread = true;
-                    }
+                    if (lm[15].y < midTorsoY) leftArmRaised = true;
+                }
+                
+                let rightArmRaised = false;
+                if (hasLandmarks([12, 16])) {
+                    const shoulderY = ((hasLandmarks([11]) ? lm[11].y : lm[12].y) + lm[12].y) / 2;
+                    let hipY = 0.80;
+                    if (lm[24]) hipY = lm[24].y;
+                    const midTorsoY = (shoulderY + hipY) / 2;
+                    if (lm[16].y < midTorsoY) rightArmRaised = true;
+                }
+                
+                if (leftArmRaised || rightArmRaised) {
+                    isSpread = true;
                 }
                 
                 if (isSpread) {
                     this.isCurrentlySpreadingArms = true;
                     if (!this.matchStartTime) {
                         this.matchStartTime = Date.now();
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `张开双臂蓄力中... 请保持`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `抬起手臂蓄力中... 请保持`);
                     } else {
                         const duration = Date.now() - this.matchStartTime;
                         const progress = Math.min(100, Math.round((duration / 700) * 100)); // 700ms hold
@@ -557,7 +557,7 @@ class MotionCaptureEngine {
                     this.isCurrentlySpreadingArms = false;
                     if (this.matchStartTime) {
                         this.matchStartTime = null;
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `请抬高手臂并张开双臂超过肩宽`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `请举起任意一只手并保持片刻`);
                     }
                 }
                 return; // Override standard angle scoring
@@ -567,14 +567,25 @@ class MotionCaptureEngine {
             if (this.activePoseKey === 'optimal_1') {
                 let isRaised = false;
                 
+                const hasLeft = hasLandmarks([15, 11]);
+                const hasRight = hasLandmarks([16, 12]);
+                
                 // 1. LEFT wrist (15) is raised clearly above LEFT shoulder (11)
-                const leftArmRaised = hasLandmarks([15, 11]) && (lm[15].y < lm[11].y);
+                const leftArmRaised = hasLeft && (lm[15].y < lm[11].y);
+                // 2. RIGHT wrist (16) is raised clearly above RIGHT shoulder (12)
+                const rightArmRaised = hasRight && (lm[16].y < lm[12].y);
                 
-                // 2. RIGHT wrist (16) is NOT fully raised high above the right shoulder/head
-                // Right hand can move naturally (bent, holding phone, at chest/waist) as long as it's not also raised high up
-                const rightArmNotRaisedHigh = hasLandmarks([16, 12]) ? (lm[16].y > (lm[12].y - 0.08)) : true;
+                if (!this.poseLogCounter) this.poseLogCounter = 0;
+                this.poseLogCounter++;
+                const shouldLogPose = (this.poseLogCounter % 30 === 0);
                 
-                if (leftArmRaised && rightArmNotRaisedHigh) {
+                if (shouldLogPose) {
+                    console.log(`[Mocap Debug] Pose optimal_1 match checking (Raise either hand):`);
+                    console.log(`  LeftArm: hasLeft=${hasLeft}, LeftWristY=${hasLeft ? lm[15].y.toFixed(2) : 'N/A'}, LeftShoulderY=${hasLeft ? lm[11].y.toFixed(2) : 'N/A'} (Raised: ${leftArmRaised})`);
+                    console.log(`  RightArm: hasRight=${hasRight}, RightWristY=${hasRight ? lm[16].y.toFixed(2) : 'N/A'}, RightShoulderY=${hasRight ? lm[12].y.toFixed(2) : 'N/A'} (Raised: ${rightArmRaised})`);
+                }
+                
+                if (leftArmRaised || rightArmRaised) {
                     isRaised = true;
                 }
                 
@@ -584,10 +595,10 @@ class MotionCaptureEngine {
                         if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `识别到举手！请保持...`);
                     } else {
                         const duration = Date.now() - this.matchStartTime;
-                        const progress = Math.min(100, Math.round((duration / 350) * 100)); // 350ms hold
+                        const progress = Math.min(100, Math.round((duration / 800) * 100)); // 800ms hold
                         if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `动作契合中: ${progress}%`);
                         
-                        if (duration >= 350) { 
+                        if (duration >= 800) { 
                             this.matchStartTime = null;
                             this.isPoseTriggerMode = false;
                             if (this.onPoseSuccess) this.onPoseSuccess(this.activePoseKey);
@@ -833,6 +844,7 @@ class MotionCaptureEngine {
                             
                             // Trigger global window callback
                             if (typeof window.onUserSpin === 'function') {
+                                console.log('[USER TRIGGER 🟢] User triggered: SPIN');
                                 window.onUserSpin();
                             }
                         }

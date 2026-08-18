@@ -1,0 +1,16 @@
+{
+  "name": "tangsancai",
+  "version": "1.0.0",
+  "description": "This project implements a web application that: 1. Uploads a video of a user performing actions. 2. Uses MediaPipe Pose Landmarker to extract 3D body pose landmarks. 3. Sends key frames to Gemini (Gemma-4-Vision-7B equivalent) to recognize the action/expression and match a 3D Tang Sancai avatar. 4. Loads a rigged 3D avatar (GLTF/GLB) in Three.js. 5. Retargets the MediaPipe 3D landmarks to drive the avatar's skeleton in real-time. 6. Records the blended dance (human + avatar or avatar only) using Canvas Capture and MediaRecorder. 7. Exports a high-quality MP4/WebM video.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.8",
+    "fbx2gltf": "^0.9.7-p1"
+  }
+}

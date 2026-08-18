@@ -1,0 +1,15 @@
+# Ignore large presentation decks
+*.pptx
+*.key
+*.pdf
+
+# Ignore local AI models and servers
+.ollama_models/
+ollama
+ollama_dist/
+ollama_extracted/
+*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db

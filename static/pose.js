@@ -164,30 +164,25 @@ class MotionCaptureEngine {
         const isWebcam = this.video.srcObject !== null;
         
         if (isWebcam) {
-            console.log("Starting motion capture driven by physical Webcam...");
-            try {
-                this.cameraHelper = new Camera(this.video, {
-                    onFrame: async () => {
-                        if (this.isTracking && this.isModelReady && this.pose) {
-                            if (!this.firstFrameSent) {
-                                console.log("[Mocap Engine] ✅ First frame sent to MediaPipe Pose!");
-                                this.firstFrameSent = true;
-                            }
-                            try {
-                                await this.pose.send({ image: this.video });
-                            } catch(e) {
-                                console.warn("[Mocap Engine] Frame send error:", e);
-                            }
-                        }
-                    },
-                    width: 640,
-                    height: 480
-                });
-                this.cameraHelper.start();
-            } catch (e) {
-                console.error("Error starting physical webcam capture:", e);
-                this.isTracking = false;
-            }
+            console.log("[Mocap Engine] 🎥 Starting direct video frame processing loop (0-blackout)...");
+            const processFrame = async () => {
+                if (!this.isTracking) return;
+                if (this.isModelReady && this.pose && this.video && !this.video.paused && !this.video.ended) {
+                    if (!this.firstFrameSent) {
+                        console.log("[Mocap Engine] ✅ First frame sent to MediaPipe Pose!");
+                        this.firstFrameSent = true;
+                    }
+                    try {
+                        await this.pose.send({ image: this.video });
+                    } catch(e) {
+                        console.warn("[Mocap Engine] Frame send error:", e);
+                    }
+                }
+                if (this.isTracking) {
+                    requestAnimationFrame(processFrame);
+                }
+            };
+            requestAnimationFrame(processFrame);
         } else {
             console.log("Starting motion capture driven by playing Video File...");
             // Local frame extraction loop using browser animation frames
@@ -259,23 +254,18 @@ class MotionCaptureEngine {
     /**
      * Evaluates whether key landmarks indicate a real human is present in the frame
      */
-    isHumanPresent(results) {
-        if (!results || !results.poseLandmarks || results.poseLandmarks.length < 29) {
-            return false;
-        }
-        const lm = results.poseLandmarks;
-        const keyIndices = [0, 11, 12, 23, 24]; // Nose, Left/Right Shoulder, Left/Right Hip
-        let totalVis = 0;
-        let count = 0;
-        for (let idx of keyIndices) {
-            if (lm[idx] && typeof lm[idx].visibility === 'number') {
-                totalVis += lm[idx].visibility;
-                count++;
+        isHumanPresent(results) {
+        if (!results || (!results.poseLandmarks && !results.poseWorldLandmarks)) return false;
+        const lm = results.poseLandmarks || results.poseWorldLandmarks;
+        if (!lm || lm.length < 15) return false;
+        
+        // Hyper-sensitive detection: Any key body landmark with visibility >= 0.15 triggers presence!
+        for (let idx of [0, 11, 12, 13, 14, 23, 24]) {
+            if (lm[idx] && typeof lm[idx].visibility === 'number' && lm[idx].visibility >= 0.15) {
+                return true;
             }
         }
-        if (count === 0) return true; // Fallback if visibility is not provided
-        const avgVis = totalVis / count;
-        return avgVis >= 0.55;
+        return false;
     }
 
     /**
@@ -340,9 +330,8 @@ class MotionCaptureEngine {
         
         this.absenceStartTime = null;
         
-        const landmarks = (results.poseWorldLandmarks && results.poseWorldLandmarks.length >= 29) 
-                          ? results.poseWorldLandmarks 
-                          : results.poseLandmarks;
+        // Always use 2D normalized screen-space landmarks for pose and gesture matching!
+        const landmarks = results.poseLandmarks || results.poseWorldLandmarks;
         
         if (this.isPoseTriggerMode) {
             this.evaluatePoseMatching(landmarks);
@@ -496,84 +485,93 @@ class MotionCaptureEngine {
                 return indices.every(idx => lm[idx] !== undefined && lm[idx] !== null);
             };
 
-            // --- ULTRA-ROBUST SPREAD ARMS OVERRIDE ---
+            // --- ULTRA-ROBUST SPREAD ARMS (spread_arms) ---
             if (this.activePoseKey === 'spread_arms') {
                 let isSpread = false;
                 
-                const shoulderY = (lm[11] && lm[12]) ? (lm[11].y + lm[12].y) / 2 : 0.5;
-                const shoulderDist = (lm[11] && lm[12]) ? Math.abs(lm[11].x - lm[12].x) : 0.15;
-                
-                // Dynamically calculate belly height using hips if available, otherwise fallback to shoulder proportions
-                let hipY = 0.8;
-                if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
-                else hipY = shoulderY + shoulderDist * 2.5;
-                
-                const bellyY = shoulderY + (hipY - shoulderY) * 0.7; 
-
-                // Wrists must be lifted above the belly button. When standing idly, wrists are at/below hips.
-                const handsLifted = (lm[15] && lm[15].y < bellyY) || (lm[16] && lm[16].y < bellyY);
-                
-                if (handsLifted) {
-                    // 1. Check elbows (for an embrace, elbows stick out wide)
-                    if (hasLandmarks([11, 12, 13, 14])) {
-                        const elbowDist = Math.abs(lm[13].x - lm[14].x);
-                        if (elbowDist > shoulderDist * 1.5) isSpread = true; 
-                    }
+                if (hasLandmarks([11, 12, 13, 14, 15, 16])) {
+                    const shoulderDist = Math.abs(lm[11].x - lm[12].x);
+                    const wristDist = Math.abs(lm[15].x - lm[16].x);
+                    const shoulderY = (lm[11].y + lm[12].y) / 2;
+                    let hipY = 0.80;
+                    if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
                     
-                    // 2. Check wrists (for horizontal spread)
-                    if (!isSpread && hasLandmarks([11, 12, 15, 16])) {
-                        const wristDist = Math.abs(lm[15].x - lm[16].x);
-                        if (wristDist > shoulderDist * 1.8) isSpread = true; 
+                    // 1. Both wrists must be lifted up to chest/shoulder level (above mid-torso, NOT hanging down at sides!)
+                    const midTorsoY = (shoulderY + hipY) / 2;
+                    const wristsLifted = (lm[15].y < midTorsoY) && (lm[16].y < midTorsoY) && 
+                                         (lm[15].y > (shoulderY - 0.40)) && (lm[16].y > (shoulderY - 0.40));
+                    
+                    // 2. Both elbows must also be raised up away from body sides
+                    const elbowsLifted = (lm[13].y < hipY - 0.05) && (lm[14].y < hipY - 0.05);
+                    
+                    // 3. Both wrists must extend significantly outwards beyond shoulders laterally
+                    const minShoulderX = Math.min(lm[11].x, lm[12].x);
+                    const maxShoulderX = Math.max(lm[11].x, lm[12].x);
+                    const minWristX = Math.min(lm[15].x, lm[16].x);
+                    const maxWristX = Math.max(lm[15].x, lm[16].x);
+                    
+                    const spreadOutwards = (minWristX < minShoulderX - 0.20 * shoulderDist) && 
+                                           (maxWristX > maxShoulderX + 0.20 * shoulderDist);
+                    
+                    // Super lenient: wrists spread beyond shoulders OR total span >= 1.15x shoulder width
+                    const spanWide = wristDist >= (shoulderDist * 1.15);
+                    
+                    if (spreadOutwards || spanWide) {
+                        isSpread = true;
                     }
                 }
                 
                 if (isSpread) {
+                    this.isCurrentlySpreadingArms = true;
                     if (!this.matchStartTime) {
                         this.matchStartTime = Date.now();
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `姿势契合！保持住... (Hold pose...)`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `张开双臂蓄力中... 请保持`);
                     } else {
                         const duration = Date.now() - this.matchStartTime;
-                        const progress = Math.min(100, Math.round((duration / 400) * 100)); // Fast 400ms trigger
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `时空共振中: ${progress}%`);
+                        const progress = Math.min(100, Math.round((duration / 150) * 100)); // 150ms instant hold
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `变身换装中: ${progress}%`);
                         
-                        if (duration >= 400) { 
+                        if (duration >= 150) { 
                             this.matchStartTime = null;
                             this.isPoseTriggerMode = false;
                             if (this.onPoseSuccess) this.onPoseSuccess(this.activePoseKey);
                         }
                     }
                 } else {
+                    this.isCurrentlySpreadingArms = false;
                     if (this.matchStartTime) {
                         this.matchStartTime = null;
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请重新拉开双臂`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `请抬高手臂并张开双臂超过肩宽`);
                     }
                 }
                 return; // Override standard angle scoring
             }
 
-            // --- ULTRA-ROBUST RAISE HANDS (optimal_1) OVERRIDE ---
+            // --- RAISE ONE HAND (optimal_1) ---
             if (this.activePoseKey === 'optimal_1') {
                 let isRaised = false;
                 
-                // Strictly check if LEFT wrist (landmark 15) is raised above left shoulder (landmark 11)
-                if (hasLandmarks([15, 11]) && lm[15].y < lm[11].y) {
-                    isRaised = true; // Left hand up
-                } 
-                // Fallback to left elbow
-                else if (hasLandmarks([13, 11]) && lm[13].y < lm[11].y) {
-                    isRaised = true; // Left elbow up
+                // 1. LEFT wrist (15) is raised clearly above LEFT shoulder (11)
+                const leftArmRaised = hasLandmarks([15, 11]) && (lm[15].y < lm[11].y);
+                
+                // 2. RIGHT wrist (16) is NOT fully raised high above the right shoulder/head
+                // Right hand can move naturally (bent, holding phone, at chest/waist) as long as it's not also raised high up
+                const rightArmNotRaisedHigh = hasLandmarks([16, 12]) ? (lm[16].y > (lm[12].y - 0.08)) : true;
+                
+                if (leftArmRaised && rightArmNotRaisedHigh) {
+                    isRaised = true;
                 }
                 
                 if (isRaised) {
                     if (!this.matchStartTime) {
                         this.matchStartTime = Date.now();
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `识别到举左手！保持住...`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `识别到举手！请保持...`);
                     } else {
                         const duration = Date.now() - this.matchStartTime;
-                        const progress = Math.min(100, Math.round((duration / 400) * 100)); // Fast 400ms trigger
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `时空共振中: ${progress}%`);
+                        const progress = Math.min(100, Math.round((duration / 350) * 100)); // 350ms hold
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("info", `动作契合中: ${progress}%`);
                         
-                        if (duration >= 400) { 
+                        if (duration >= 350) { 
                             this.matchStartTime = null;
                             this.isPoseTriggerMode = false;
                             if (this.onPoseSuccess) this.onPoseSuccess(this.activePoseKey);
@@ -582,7 +580,7 @@ class MotionCaptureEngine {
                 } else {
                     if (this.matchStartTime) {
                         this.matchStartTime = null;
-                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请举起左手`);
+                        if (typeof window.updateTrackingBadge === 'function') window.updateTrackingBadge("warning", `姿势中断，请举起一只手并保持片刻`);
                     }
                 }
                 return; // Override standard angle scoring
@@ -736,28 +734,32 @@ class MotionCaptureEngine {
         const pR = lm[12]; // Right Shoulder
 
         // ================= 1. 360-DEGREE SPIN DETECTION & CONTINUOUS SPREAD ARMS =================
-        if (lm) {
+        if (lm && lm[11] && lm[12] && lm[15] && lm[16]) {
             let isSpread = false;
-            const shoulderY = (lm[11] && lm[12]) ? (lm[11].y + lm[12].y) / 2 : 0.5;
-            const shoulderDist = (lm[11] && lm[12]) ? Math.abs(lm[11].x - lm[12].x) : 0.15;
+            const shoulderDist = Math.abs(lm[11].x - lm[12].x);
+            const wristDist = Math.abs(lm[15].x - lm[16].x);
             
-            let hipY = 0.8;
+            const shoulderY = (lm[11].y + lm[12].y) / 2;
+            let hipY = 0.85;
             if (lm[23] && lm[24]) hipY = (lm[23].y + lm[24].y) / 2;
-            else hipY = shoulderY + shoulderDist * 2.5;
             
-            const bellyY = shoulderY + (hipY - shoulderY) * 0.7;
-            const handsLifted = (lm[15] && lm[15].y < bellyY) || (lm[16] && lm[16].y < bellyY);
+            const wristsLifted = (lm[15].y < hipY + 0.05) && (lm[16].y < hipY + 0.05) && 
+                                 (lm[15].y > (shoulderY - 0.45)) && (lm[16].y > (shoulderY - 0.45));
             
-            if (handsLifted) {
-                if (lm[11] && lm[12] && lm[13] && lm[14]) {
-                    const elbowDist = Math.abs(lm[13].x - lm[14].x);
-                    if (elbowDist > shoulderDist * 1.5) isSpread = true;
-                }
-                if (!isSpread && lm[11] && lm[12] && lm[15] && lm[16]) {
-                    const wristDist = Math.abs(lm[15].x - lm[16].x);
-                    if (wristDist > shoulderDist * 1.8) isSpread = true;
-                }
+            const minShoulderX = Math.min(lm[11].x, lm[12].x);
+            const maxShoulderX = Math.max(lm[11].x, lm[12].x);
+            const minWristX = Math.min(lm[15].x, lm[16].x);
+            const maxWristX = Math.max(lm[15].x, lm[16].x);
+            
+            const spreadOutwards = (minWristX < minShoulderX - 0.10 * shoulderDist) && 
+                                   (maxWristX > maxShoulderX + 0.10 * shoulderDist);
+            
+            const spanWide = wristDist >= (shoulderDist * 1.5);
+            
+            if (wristsLifted && spreadOutwards && spanWide) {
+                isSpread = true;
             }
+            
             this.isCurrentlySpreadingArms = isSpread;
             if (isSpread) {
                 this.lastSpreadArmsTime = Date.now();
@@ -852,10 +854,10 @@ class MotionCaptureEngine {
             if (this.movementIntensity < STILL_THRESHOLD) {
                 if (!this.stillStartTime) {
                     this.stillStartTime = now;
-                } else if (now - this.stillStartTime > 15000) { // Still for 15 seconds
+                } else if (now - this.stillStartTime > 5000) { // Still for 5 seconds
                     if (!this.isStill) {
                         this.isStill = true;
-                        console.log("[Mocap Engine] User is STILL for 15 seconds");
+                        console.log("[Mocap Engine] User is STILL for 5 seconds");
                         if (typeof window.onUserStill === 'function') {
                             window.onUserStill(false); // User is just still
                         }
