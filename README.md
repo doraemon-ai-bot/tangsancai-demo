@@ -19,7 +19,7 @@
 -->
 
 <div align="center">
-  <video src="https://github.com/user-attachments/assets/YOUR_VIDEO_ID_HERE" controls width="80%" poster="static/models/color_ref.jpg">
+  <video src="static/FinalDemo.mp4" controls width="80%">
     Your browser does not support the video tag.
   </video>
   <p><em>▲ 乐舞胡旋：AI 穿搭感应与 3D 动作捕捉交互演示</em></p>
